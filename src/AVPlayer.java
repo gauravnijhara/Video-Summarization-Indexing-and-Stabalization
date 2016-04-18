@@ -5,127 +5,175 @@ import java.io.*;
 import javax.swing.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+
+import static java.lang.Thread.sleep;
 
 
 public class AVPlayer {
 
-	JFrame frame;
-	JLabel lbIm1;
-	JLabel lbIm2;
-	BufferedImage img;
+    JFrame frame;
+    JLabel lbIm1;
+    JLabel lbIm2;
+    BufferedImage img;
 
-	public void initialize(String[] args){
-		int width = 480;
-		int height = 270;
+    private static final String DEFAULT_LOCATION = "/Users/ayberk/Downloads/Alin_Day1_002";
+    private static final String DEFAULT_FILENAME = "Alin_Day1_002";
+    private static final String DEFAULT_MOVIE = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".rgb";
+    private static final String DEFAULT_SOUND = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".wav";
 
-		img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    private static final int FRAME_RATE = 15;
+    private static final int LENGTH = 5; // in minutes [todo] this should not be hardcoded
 
-		try {
-			File file = new File(args[0]);
-			InputStream is = new FileInputStream(file);
+    public void initialize() throws InterruptedException{
+        int width = 480;
+        int height = 270;
 
-			//long len = file.length();
-			long len = width*height*3;
-			byte[] bytes = new byte[(int)len];
+        img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        try {
+            File file = new File(DEFAULT_MOVIE);
+            InputStream is = new FileInputStream(file);
 
-			int offset = 0;
-			int numRead = 0;
-			while (offset < bytes.length && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
-				offset += numRead;
-			}
+            //long len = file.length();
+            long len = width*height*3;
+            byte[] bytes = new byte[(int)len];
 
+            int totalBytesRead = 0;
 
-			int ind = 0;
-			for(int y = 0; y < height; y++){
+            for( int i = 0 ; i < LENGTH*60*FRAME_RATE; i++)
+            {
+                int offset = 0;
+                int numRead = 0;
 
-				for(int x = 0; x < width; x++){
+                while (offset < bytes.length && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                    offset += numRead;
+                }
 
-					byte a = 0;
-					byte r = bytes[ind];
-					byte g = bytes[ind+height*width];
-					byte b = bytes[ind+height*width*2]; 
+                int ind = 0;
+                for(int y = 0; y < height; y++){
+                    for(int x = 0; x < width; x++){
 
-					int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
-					//int pix = ((a << 24) + (r << 16) + (g << 8) + b);
-					img.setRGB(x,y,pix);
-					ind++;
-				}
-			}
+                        byte a = 0;
+                        byte r = bytes[ind];
+                        byte g = bytes[ind+height*width];
+                        byte b = bytes[ind+height*width*2];
 
+                        int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+                        //int pix = ((a << 24) + (r << 16) + (g << 8) + b);
+                        img.setRGB(x,y,pix);
+                        ind++;
+                    }
+                }
+                lbIm1.setIcon(new ImageIcon(img));
+                sleep(1000/FRAME_RATE);
+            }
 
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-		// Use labels to display the images
-		frame = new JFrame();
-		GridBagLayout gLayout = new GridBagLayout();
-		frame.getContentPane().setLayout(gLayout);
+    public void playVideo() {
+        setDisplay();
+        Thread videoThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    initialize();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
-		JLabel lbText1 = new JLabel("Video: " + args[0]);
-		lbText1.setHorizontalAlignment(SwingConstants.LEFT);
-		JLabel lbText2 = new JLabel("Audio: " + args[1]);
-		lbText2.setHorizontalAlignment(SwingConstants.LEFT);
-		lbIm1 = new JLabel(new ImageIcon(img));
+        Thread soundThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    playWAV(DEFAULT_SOUND);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
-		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.anchor = GridBagConstraints.CENTER;
-		c.weightx = 0.5;
-		c.gridx = 0;
-		c.gridy = 0;
-		frame.getContentPane().add(lbText1, c);
+        videoThread.start();
+        soundThread.start();
+    }
 
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.anchor = GridBagConstraints.CENTER;
-		c.weightx = 0.5;
-		c.gridx = 0;
-		c.gridy = 1;
-		frame.getContentPane().add(lbText2, c);
+    public void playWAV(String filename) throws InterruptedException {
+        // opens the inputStream
+        FileInputStream inputStream;
+        try {
+            inputStream = new FileInputStream(filename);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
 
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 2;
-		frame.getContentPane().add(lbIm1, c);
+        // initializes the playSound Object
+        PlaySound playSound = new PlaySound(inputStream);
 
-		frame.pack();
-		frame.setVisible(true);
-		
-		
-	}
-	
-	public void playWAV(String filename){
-		// opens the inputStream
-		FileInputStream inputStream;
-		try {
-			inputStream = new FileInputStream(filename);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return;
-		}
+        // plays the sound
+        try {
+            playSound.play();
+            sleep(1000/FRAME_RATE);
+        } catch (PlayWaveException e) {
+            e.printStackTrace();
+            return;
+        }
+    }
 
-		// initializes the playSound Object
-		PlaySound playSound = new PlaySound(inputStream);
+    public void setDisplay()
+    {
+        // Use labels to display the images
+        frame = new JFrame();
+        GridBagLayout gLayout = new GridBagLayout();
+        frame.getContentPane().setLayout(gLayout);
 
-		// plays the sound
-		try {
-			playSound.play();
-		} catch (PlayWaveException e) {
-			e.printStackTrace();
-			return;
-		}
-	}
+        //JLabel lbText1 = new JLabel("Video: " + args[0]);
+        JLabel lbText1 = new JLabel("Video: ");
+        lbText1.setHorizontalAlignment(SwingConstants.LEFT);
+        //JLabel lbText2 = new JLabel("Audio: " + args[1]);
+        JLabel lbText2 = new JLabel("Audio: ");
+        lbText2.setHorizontalAlignment(SwingConstants.LEFT);
+        lbIm1 = new JLabel(new ImageIcon());
 
-	public static void main(String[] args) {
-		if (args.length < 2) {
-		    System.err.println("usage: java -jar AVPlayer.jar [RGB file] [WAV file]");
-		    return;
-		}
-		AVPlayer ren = new AVPlayer();
-		ren.initialize(args);
-		ren.playWAV(args[1]);
-	}
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.CENTER;
+        c.weightx = 0.5;
+        c.gridx = 0;
+        c.gridy = 0;
+        frame.getContentPane().add(lbText1, c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.CENTER;
+        c.weightx = 0.5;
+        c.gridx = 0;
+        c.gridy = 1;
+        frame.getContentPane().add(lbText2, c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 2;
+        frame.getContentPane().add(lbIm1, c);
+
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+//		if (args.length < 2) {
+//		    System.err.println("usage: java -jar AVPlayer.jar [RGB file] [WAV file]");
+//		    return;
+//		}
+        AVPlayer ren = new AVPlayer();
+        ren.playVideo();
+    }
 
 }
