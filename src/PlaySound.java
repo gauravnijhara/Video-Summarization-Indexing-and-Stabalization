@@ -21,7 +21,8 @@ import javax.sound.sampled.DataLine.Info;
 public class PlaySound {
 
     private InputStream waveStream;
-
+	private float sampleRate;
+	private SourceDataLine dataLine;
     private final int EXTERNAL_BUFFER_SIZE = 524288; // 128Kb
 
     /**
@@ -46,9 +47,9 @@ public class PlaySound {
 	// Obtain the information about the AudioInputStream
 	AudioFormat audioFormat = audioInputStream.getFormat();
 	Info info = new Info(SourceDataLine.class, audioFormat);
-
+	this.sampleRate = audioFormat.getSampleRate();
 	// opens the audio channel
-	SourceDataLine dataLine = null;
+	dataLine = null;
 	try {
 	    dataLine = (SourceDataLine) AudioSystem.getLine(info);
 	    dataLine.open(audioFormat, this.EXTERNAL_BUFFER_SIZE);
@@ -79,4 +80,12 @@ public class PlaySound {
 	}
 
     }
+
+	public float getSampleRate() {
+		return this.sampleRate;
+	}
+
+	public long getFramePosition() {
+		return this.dataLine.getLongFramePosition();
+	}
 }

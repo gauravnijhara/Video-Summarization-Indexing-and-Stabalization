@@ -27,6 +27,9 @@ public class AVPlayer {
     private static final int FRAME_RATE = 15;
     private static final int LENGTH = 5; // in minutes [todo] this should not be hardcoded
 
+    float audioPerFrame = 1;
+    PlaySound playSound;
+
     public void initialize() throws InterruptedException{
         int width = 480;
         int height = 270;
@@ -116,12 +119,12 @@ public class AVPlayer {
         }
 
         // initializes the playSound Object
-        PlaySound playSound = new PlaySound(inputStream);
-
+        playSound = new PlaySound(inputStream);
+        this.audioPerFrame = playSound.getSampleRate()/FRAME_RATE;
         // plays the sound
         try {
             playSound.play();
-            sleep(1000/FRAME_RATE);
+            sleep(10000);
         } catch (PlayWaveException e) {
             e.printStackTrace();
             return;
