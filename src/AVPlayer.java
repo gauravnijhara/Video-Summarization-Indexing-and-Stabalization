@@ -29,49 +29,24 @@ public class AVPlayer {
 
     float audioPerFrame = 1;
     PlaySound playSound;
+    int width = 480;
+    int height = 270;
+    InputStream is;
+    byte[] bytes;
 
     public void initialize() throws InterruptedException{
-        int width = 480;
-        int height = 270;
 
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         try {
             File file = new File(DEFAULT_MOVIE);
-            InputStream is = new FileInputStream(file);
+            is = new FileInputStream(file);
 
             //long len = file.length();
             long len = width*height*3;
-            byte[] bytes = new byte[(int)len];
+            bytes = new byte[(int)len];
 
             int totalBytesRead = 0;
 
-            for( int i = 0 ; i < LENGTH*60*FRAME_RATE; i++)
-            {
-                int offset = 0;
-                int numRead = 0;
-
-                while (offset < bytes.length && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
-                    offset += numRead;
-                }
-
-                int ind = 0;
-                for(int y = 0; y < height; y++){
-                    for(int x = 0; x < width; x++){
-
-                        byte a = 0;
-                        byte r = bytes[ind];
-                        byte g = bytes[ind+height*width];
-                        byte b = bytes[ind+height*width*2];
-
-                        int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
-                        //int pix = ((a << 24) + (r << 16) + (g << 8) + b);
-                        img.setRGB(x,y,pix);
-                        ind++;
-                    }
-                }
-                lbIm1.setIcon(new ImageIcon(img));
-                sleep(1000/FRAME_RATE);
-            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -80,16 +55,55 @@ public class AVPlayer {
         }
     }
 
-    public void playVideo() {
+    private void play() {
+        for( int i = 0 ; i < LENGTH*60*FRAME_RATE; i++) {
+            readFrame();
+            try {
+                sleep(1000 / FRAME_RATE);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void readFrame() {
+        int offset = 0;
+        int numRead = 0;
+
+        try {
+            while (offset < bytes.length && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
+                offset += numRead;
+            }
+
+            int ind = 0;
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+
+                    byte a = 0;
+                    byte r = bytes[ind];
+                    byte g = bytes[ind + height * width];
+                    byte b = bytes[ind + height * width * 2];
+
+                    int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+                    //int pix = ((a << 24) + (r << 16) + (g << 8) + b);
+                    img.setRGB(x, y, pix);
+                    ind++;
+                }
+            }
+            lbIm1.setIcon(new ImageIcon(img));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void playVideo() throws InterruptedException {
         setDisplay();
+        initialize();
         Thread videoThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    initialize();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                    play();
             }
         });
 
