@@ -17,6 +17,7 @@ public class AVPlayer {
     JFrame frame;
     JLabel lbIm1;
     JLabel lbIm2;
+    JLabel lbText1;
     BufferedImage img;
 
     private static final String DEFAULT_LOCATION = "/Users/ayberk/Downloads/Alin_Day1_002";
@@ -118,6 +119,23 @@ public class AVPlayer {
             }
         });
 
+        Thread timer = new Thread(new Runnable() {
+            int counter = 0;
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    counter++;
+                    lbText1.setText(counter + " seconds");
+                }
+            }
+        });
+
+        timer.start();
         videoThread.start();
         soundThread.start();
     }
@@ -154,7 +172,7 @@ public class AVPlayer {
         frame.getContentPane().setLayout(gLayout);
 
         //JLabel lbText1 = new JLabel("Video: " + args[0]);
-        JLabel lbText1 = new JLabel("Video: ");
+        lbText1 = new JLabel("Video: ");
         lbText1.setHorizontalAlignment(SwingConstants.LEFT);
         //JLabel lbText2 = new JLabel("Audio: " + args[1]);
         JLabel lbText2 = new JLabel("Audio: ");
