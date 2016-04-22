@@ -12,6 +12,8 @@ import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.sound.sampled.DataLine.Info;
 
+import static java.lang.Thread.sleep;
+
 /**
  * 
  * <Replace this with a short description of the class.>
@@ -23,7 +25,10 @@ public class PlaySound {
     private InputStream waveStream;
 	private float sampleRate;
 	private SourceDataLine dataLine;
-    private final int EXTERNAL_BUFFER_SIZE = 524288; // 128Kb
+    //private final int EXTERNAL_BUFFER_SIZE = 524288; // 128Kb
+
+	//44100 samples per second, 44100/15 samples per frame, that*2 bytes
+	private final int EXTERNAL_BUFFER_SIZE = 5880;
 
     /**
      * CONSTRUCTOR
@@ -33,7 +38,7 @@ public class PlaySound {
 	this.waveStream = new BufferedInputStream(waveStream);
     }
 
-	public void play() throws PlayWaveException {
+	public void play() throws PlayWaveException, InterruptedException {
 
 	AudioInputStream audioInputStream = null;
 	try {
@@ -59,17 +64,16 @@ public class PlaySound {
 
 	// Starts the music :P
 	dataLine.start();
-
 	int readBytes = 0;
 	byte[] audioBuffer = new byte[this.EXTERNAL_BUFFER_SIZE];
 
 	try {
 	    while (readBytes != -1) {
-		readBytes = audioInputStream.read(audioBuffer, 0,
-			audioBuffer.length);
-		if (readBytes >= 0){
-		    dataLine.write(audioBuffer, 0, readBytes);
-		}
+            readBytes = audioInputStream.read(audioBuffer, 0, audioBuffer.length);
+            if (readBytes >= 0){
+                dataLine.write(audioBuffer, 0, readBytes);
+				sleep(1000/15);
+            }
 	    }
 	} catch (IOException e1) {
 	    throw new PlayWaveException(e1);
@@ -83,9 +87,5 @@ public class PlaySound {
 
 	public float getSampleRate() {
 		return this.sampleRate;
-	}
-
-	public long getFramePosition() {
-		return this.dataLine.getLongFramePosition();
 	}
 }

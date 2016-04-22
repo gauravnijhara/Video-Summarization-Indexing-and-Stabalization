@@ -36,6 +36,7 @@ public class AVPlayer {
 
     public void initialize() throws InterruptedException{
 
+        setDisplay();
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         try {
             File file = new File(DEFAULT_MOVIE);
@@ -98,7 +99,6 @@ public class AVPlayer {
 
 
     public void playVideo() throws InterruptedException {
-        setDisplay();
         initialize();
         Thread videoThread = new Thread(new Runnable() {
             @Override
@@ -149,6 +149,7 @@ public class AVPlayer {
     {
         // Use labels to display the images
         frame = new JFrame();
+        frame.setSize(600, 400);
         GridBagLayout gLayout = new GridBagLayout();
         frame.getContentPane().setLayout(gLayout);
 
@@ -180,7 +181,6 @@ public class AVPlayer {
         c.gridy = 2;
         frame.getContentPane().add(lbIm1, c);
 
-        frame.pack();
         frame.setVisible(true);
     }
 
