@@ -72,7 +72,8 @@ public class PlaySound {
             readBytes = audioInputStream.read(audioBuffer, 0, audioBuffer.length);
             if (readBytes >= 0){
                 dataLine.write(audioBuffer, 0, readBytes);
-				sleep(1000/15);
+				int rate = (int)sampleRate / 15;
+				sleep(1000/rate);
             }
 	    }
 	} catch (IOException e1) {

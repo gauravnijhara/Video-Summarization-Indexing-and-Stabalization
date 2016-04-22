@@ -1,13 +1,9 @@
-
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
 import javax.swing.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
 
 import static java.lang.Thread.sleep;
 
@@ -26,8 +22,8 @@ public class AVPlayer {
     private static final String DEFAULT_SOUND = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".wav";
 
     private static final int FRAME_RATE = 15;
-    private static final int LENGTH = 5; // in minutes [todo] this should not be hardcoded
 
+    private long numberOfFrames = 0;
     float audioPerFrame = 1;
     PlaySound playSound;
     int width = 480;
@@ -45,6 +41,7 @@ public class AVPlayer {
 
             //long len = file.length();
             long len = width*height*3;
+            numberOfFrames = file.length() / len;
             bytes = new byte[(int)len];
 
             int totalBytesRead = 0;
@@ -58,7 +55,7 @@ public class AVPlayer {
     }
 
     private void play() {
-        for( int i = 0 ; i < LENGTH*60*FRAME_RATE; i++) {
+        for( int i = 0 ; i < numberOfFrames; i++) {
             readFrame();
             try {
                 sleep(1000 / FRAME_RATE);
