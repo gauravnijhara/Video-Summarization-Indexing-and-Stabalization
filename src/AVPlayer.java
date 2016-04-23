@@ -7,6 +7,8 @@ import java.io.*;
 import javax.swing.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.Thread.sleep;
 
@@ -104,7 +106,7 @@ public class AVPlayer implements ActionListener {
     private void play() {
         for( int i = currentFrame; i < numberOfFrames; i++) {
             long lStartTime = System.currentTimeMillis();
-            readFrame();
+            readFrame(false);
             try {
                 long difference = (1000 / FRAME_RATE) - (System.currentTimeMillis() - lStartTime);
                 if(difference>0) {
@@ -116,7 +118,35 @@ public class AVPlayer implements ActionListener {
         }
     }
 
-    private void readFrame() {
+    private void playSpecificFrames(List<Integer> frames) {
+        currentFrame = 0;
+        int frameIndex = 0;
+        while (currentFrame < numberOfFrames && frameIndex < frames.size()) {
+            // skip these
+            while (frameIndex < frames.size() && currentFrame != frames.get(frameIndex)) {
+                readFrame(true);
+                currentFrame++;
+            }
+
+            // show these
+            while (frameIndex < frames.size() && currentFrame == frames.get(frameIndex))  {
+                long lStartTime = System.currentTimeMillis();
+                readFrame(false);
+                try {
+                    long difference = (1000 / FRAME_RATE) - (System.currentTimeMillis() - lStartTime);
+                    if(difference>0) {
+                        sleep(difference);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                currentFrame++;
+                frameIndex++;
+            }
+        }
+    }
+
+    private void readFrame(boolean skip) {
         int offset = 0;
         int numRead = 0;
 
@@ -136,7 +166,9 @@ public class AVPlayer implements ActionListener {
 
                     int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
                     //int pix = ((a << 24) + (r << 16) + (g << 8) + b);
-                    img.setRGB(x, y, pix);
+                    if (!skip) {
+                        img.setRGB(x, y, pix);
+                    }
                     ind++;
                 }
             }
@@ -146,41 +178,14 @@ public class AVPlayer implements ActionListener {
         }
     }
 
-
-    public void playVideo() throws InterruptedException {
+    public void playSummarize(List<Integer> frames) throws  InterruptedException {
         videoThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                play();
+                playSpecificFrames(frames);
             }
         });
-
-        audioThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    playWAV(DEFAULT_SOUND);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        timerThread = new Thread(new Runnable() {
-            int counter = 0;
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    counter++;
-                    lbText1.setText(counter + " seconds");
-                }
-            }
-        });
+        videoThread.start();
     }
 
     public void playWAV(String filename) throws InterruptedException {
@@ -269,6 +274,14 @@ public class AVPlayer implements ActionListener {
             ren.videoFileName = args[0];
         }
         ren.setDisplay();
+        /*
+        ren.initialize();
+        List<Integer> list = new ArrayList<>();
+        for (int i=50; i<100; i++) {
+            list.add(i);
+        }
+        ren.playSummarize(list);
+        */
     }
 
     @Override
