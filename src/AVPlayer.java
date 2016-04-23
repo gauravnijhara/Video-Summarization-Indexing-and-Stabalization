@@ -1,4 +1,7 @@
+import com.sun.tools.javac.code.Attribute;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.*;
 import java.io.*;
 import javax.swing.*;
@@ -7,14 +10,20 @@ import java.io.FileNotFoundException;
 
 import static java.lang.Thread.sleep;
 
+public class AVPlayer implements ActionListener {
 
-public class AVPlayer {
-
+    PlayerStatus status = PlayerStatus.STOPPED;
     JFrame frame;
     JLabel lbIm1;
     JLabel lbIm2;
     JLabel lbText1;
     BufferedImage img;
+    JButton playPauseButton;
+    JButton stopButton;
+
+    Thread videoThread;
+    Thread audioThread;
+    Thread timerThread;
 
     private static final String DEFAULT_LOCATION = "/Users/ayberk/Downloads/Alin_Day1_002";
     private static final String DEFAULT_FILENAME = "Alin_Day1_002";
@@ -30,10 +39,46 @@ public class AVPlayer {
     int height = 270;
     InputStream is;
     byte[] bytes;
+    int currentFrame = 0;
+
+    private void createThreads() {
+        videoThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                play();
+            }
+        });
+
+        audioThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    playWAV(DEFAULT_SOUND);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        timerThread = new Thread(new Runnable() {
+            int counter = 0;
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    counter++;
+                    lbText1.setText(counter + " seconds");
+                }
+            }
+        });
+    }
 
     public void initialize() throws InterruptedException{
-
-        setDisplay();
+        createThreads();
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         try {
             File file = new File(DEFAULT_MOVIE);
@@ -46,7 +91,6 @@ public class AVPlayer {
 
             int totalBytesRead = 0;
 
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -55,7 +99,7 @@ public class AVPlayer {
     }
 
     private void play() {
-        for( int i = 0 ; i < numberOfFrames; i++) {
+        for( int i = currentFrame; i < numberOfFrames; i++) {
             readFrame();
             try {
                 sleep(1000 / FRAME_RATE);
@@ -97,15 +141,14 @@ public class AVPlayer {
 
 
     public void playVideo() throws InterruptedException {
-        initialize();
-        Thread videoThread = new Thread(new Runnable() {
+        videoThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                    play();
+                play();
             }
         });
 
-        Thread soundThread = new Thread(new Runnable() {
+        audioThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -116,7 +159,7 @@ public class AVPlayer {
             }
         });
 
-        Thread timer = new Thread(new Runnable() {
+        timerThread = new Thread(new Runnable() {
             int counter = 0;
             @Override
             public void run() {
@@ -131,10 +174,6 @@ public class AVPlayer {
                 }
             }
         });
-
-        timer.start();
-        videoThread.start();
-        soundThread.start();
     }
 
     public void playWAV(String filename) throws InterruptedException {
@@ -153,7 +192,6 @@ public class AVPlayer {
         // plays the sound
         try {
             playSound.play();
-            sleep(10000);
         } catch (PlayWaveException e) {
             e.printStackTrace();
             return;
@@ -196,6 +234,20 @@ public class AVPlayer {
         c.gridy = 2;
         frame.getContentPane().add(lbIm1, c);
 
+        playPauseButton = new JButton();
+        playPauseButton.setText("Play");
+        playPauseButton.addActionListener(this);
+        playPauseButton.setSize(15,10);
+        playPauseButton.setLocation(0, 0);
+        frame.getContentPane().add(playPauseButton);
+
+        stopButton = new JButton();
+        stopButton.setText("Stop");
+        stopButton.addActionListener(this);
+        stopButton.setSize(15,10);
+        stopButton.setLocation(0, 0);
+        frame.getContentPane().add(stopButton);
+
         frame.setVisible(true);
     }
 
@@ -205,7 +257,56 @@ public class AVPlayer {
 //		    return;
 //		}
         AVPlayer ren = new AVPlayer();
-        ren.playVideo();
+        ren.setDisplay();
     }
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == playPauseButton) {
+            if (status == PlayerStatus.STOPPED) {
+                try {
+                    initialize();
+                    status = PlayerStatus.PAUSED;
+                    currentFrame = 0;
+                    startThreads();
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            if (status == PlayerStatus.PAUSED) {
+                status = PlayerStatus.PLAYING;
+                playPauseButton.setText("Pause");
+                resumeThreads();
+            } else {
+                status = PlayerStatus.PAUSED;
+                playPauseButton.setText("Play");
+                suspendThreads();
+            }
+        }
+
+        if (e.getSource() == stopButton) {
+            status = PlayerStatus.STOPPED;
+            playPauseButton.setText("Play");
+            suspendThreads();
+        }
+    }
+
+    private void suspendThreads() {
+        videoThread.suspend();
+        audioThread.suspend();
+        timerThread.suspend();
+    }
+
+    private void startThreads() {
+        videoThread.start();
+        audioThread.start();
+        timerThread.start();
+    }
+
+    private void resumeThreads() {
+        videoThread.resume();
+        audioThread.resume();
+        timerThread.resume();
+    }
 }
