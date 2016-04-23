@@ -25,6 +25,9 @@ public class AVPlayer implements ActionListener {
     Thread audioThread;
     Thread timerThread;
 
+    public String videoFileName;
+    public String audioFileName;
+
     private static final String DEFAULT_LOCATION = "/Users/ayberk/Downloads/Alin_Day1_002";
     private static final String DEFAULT_FILENAME = "Alin_Day1_002";
     private static final String DEFAULT_MOVIE = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".rgb";
@@ -53,7 +56,7 @@ public class AVPlayer implements ActionListener {
             @Override
             public void run() {
                 try {
-                    playWAV(DEFAULT_SOUND);
+                    playWAV(audioFileName);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -81,7 +84,7 @@ public class AVPlayer implements ActionListener {
         createThreads();
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         try {
-            File file = new File(DEFAULT_MOVIE);
+            File file = new File(videoFileName);
             is = new FileInputStream(file);
 
             //long len = file.length();
@@ -253,11 +256,14 @@ public class AVPlayer implements ActionListener {
     }
 
     public static void main(String[] args) throws InterruptedException {
-//		if (args.length < 2) {
-//		    System.err.println("usage: java -jar AVPlayer.jar [RGB file] [WAV file]");
-//		    return;
-//		}
         AVPlayer ren = new AVPlayer();
+		if (args.length < 2) {
+            ren.audioFileName = DEFAULT_SOUND;
+            ren.videoFileName = DEFAULT_MOVIE;
+		} else {
+            ren.audioFileName = args[1];
+            ren.videoFileName = args[0];
+        }
         ren.setDisplay();
     }
 
