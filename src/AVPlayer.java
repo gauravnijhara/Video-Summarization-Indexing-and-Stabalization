@@ -202,7 +202,7 @@ public class AVPlayer implements ActionListener {
     {
         // Use labels to display the images
         frame = new JFrame();
-        frame.setSize(600, 400);
+        frame.setSize(650, 400);
         GridBagLayout gLayout = new GridBagLayout();
         frame.getContentPane().setLayout(gLayout);
 
@@ -213,6 +213,7 @@ public class AVPlayer implements ActionListener {
         JLabel lbText2 = new JLabel("Audio: ");
         lbText2.setHorizontalAlignment(SwingConstants.LEFT);
         lbIm1 = new JLabel(new ImageIcon());
+        lbIm1.setSize(width, height);
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -234,19 +235,19 @@ public class AVPlayer implements ActionListener {
         c.gridy = 2;
         frame.getContentPane().add(lbIm1, c);
 
+        c.gridx = 0;
+        c.gridy = 3;
         playPauseButton = new JButton();
         playPauseButton.setText("Play");
         playPauseButton.addActionListener(this);
-        playPauseButton.setSize(15,10);
-        playPauseButton.setLocation(0, 0);
-        frame.getContentPane().add(playPauseButton);
+        frame.getContentPane().add(playPauseButton, c);
 
+        c.gridx = 1;
+        c.gridy = 3;
         stopButton = new JButton();
         stopButton.setText("Stop");
         stopButton.addActionListener(this);
-        stopButton.setSize(15,10);
-        stopButton.setLocation(0, 0);
-        frame.getContentPane().add(stopButton);
+        frame.getContentPane().add(stopButton, c);
 
         frame.setVisible(true);
     }
