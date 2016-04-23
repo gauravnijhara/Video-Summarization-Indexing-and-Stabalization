@@ -103,9 +103,13 @@ public class AVPlayer implements ActionListener {
 
     private void play() {
         for( int i = currentFrame; i < numberOfFrames; i++) {
+            long lStartTime = System.currentTimeMillis();
             readFrame();
             try {
-                sleep(1000 / FRAME_RATE);
+                long difference = (1000 / FRAME_RATE) - (System.currentTimeMillis() - lStartTime);
+                if(difference>0) {
+                    sleep(difference);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

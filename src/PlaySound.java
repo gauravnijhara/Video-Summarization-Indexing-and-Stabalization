@@ -15,9 +15,9 @@ import javax.sound.sampled.DataLine.Info;
 import static java.lang.Thread.sleep;
 
 /**
- * 
+ *
  * <Replace this with a short description of the class.>
- * 
+ *
  * @author Giulio
  */
 public class PlaySound {
@@ -72,8 +72,6 @@ public class PlaySound {
             readBytes = audioInputStream.read(audioBuffer, 0, audioBuffer.length);
             if (readBytes >= 0){
                 dataLine.write(audioBuffer, 0, readBytes);
-				int rate = (int)sampleRate / 15;
-				sleep(1000/rate);
             }
 	    }
 	} catch (IOException e1) {
