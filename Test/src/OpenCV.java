@@ -2,13 +2,17 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.util.*;
 import javax.swing.ImageIcon;
 
 import org.opencv.core.*;
 import org.opencv.core.Size;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.FeatureDetector;
 import org.opencv.video.Video;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.imgproc.*;
@@ -16,13 +20,19 @@ import org.opencv.imgproc.*;
 
 public class OpenCV {
 	
-    static ArrayList<MatOfPoint2f> metaData = new ArrayList<MatOfPoint2f>();
+    static ArrayList<Mat> metaData = new ArrayList<Mat>();
+    static ArrayList<Mat> YUVImages = new ArrayList<Mat>();
     static ArrayList<Integer> SADValues = new ArrayList<Integer>();
+	static FeatureDetector featureDet;
+	static DescriptorExtractor descExtract;
 
 	public static void main( String[] args )
 	   {
 		
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		featureDet = FeatureDetector.create(FeatureDetector.BRISK);
+		descExtract = DescriptorExtractor.create(DescriptorExtractor.BRISK);
+		
 		int width = 480;
 		int height = 270;
 
@@ -43,7 +53,7 @@ public class OpenCV {
 		try {
 			
 			
-			File file = new File("../Alireza_Day2_003/Alireza_Day2_003.rgb");
+			File file = new File("../Yin_Snack/Yin_Snack.rgb");
 			InputStream is = new FileInputStream(file);
 			//is.skip(575424000);
 			
@@ -104,12 +114,15 @@ public class OpenCV {
 				{
 					//RGBframe.release();
 					RGBSecondframe.put(0, 0, data);
+					calculateMetadata(RGBSecondframe);
 					performOpticalAnalysis(RGBframe,RGBSecondframe);
 					
 				}
 				else
 				{
 					RGBframe.put(0, 0, data);
+					calculateMetadata(RGBframe);
+
 				}
 				
 				
@@ -238,8 +251,8 @@ public class OpenCV {
 				 
 				 j++;
 			 }
-			 
-			System.out.println("yaya here");
+			  
+						System.out.println("yaya here");
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -262,6 +275,7 @@ public class OpenCV {
 			MatOfPoint2f corners_old2f = new MatOfPoint2f();
 			MatOfPoint2f corners_new2f = new MatOfPoint2f();
 			
+			
 			Imgproc.cvtColor(oldFrame,YUVframeOld,Imgproc.COLOR_BGR2GRAY,0);
 			Imgproc.goodFeaturesToTrack(YUVframeOld, corners_old, 5000, 0.2, 5);
 		    corners_old.convertTo(corners_old2f, CvType.CV_32FC2);
@@ -270,6 +284,8 @@ public class OpenCV {
 		    Imgproc.goodFeaturesToTrack(YUVframeNew, corners_new,5000, 0.2, 2);			        
 	        corners_new.convertTo(corners_new2f, CvType.CV_32FC2);
 	        
+			YUVImages.add(YUVframeNew);
+			
 	        
 		   // Video.calcOpticalFlowPyrLK(YUVframeOld,YUVframeNew,corners_old2f, corners_new2f, status, error);
 		    Video.calcOpticalFlowPyrLK(YUVframeOld,YUVframeNew,corners_old2f, corners_new2f, status, error,new Size(240.0,135.0),5);
@@ -315,4 +331,13 @@ public class OpenCV {
 
 	}
 	
+	public static void calculateMetadata(Mat a)
+	{
+		
+		Mat descriptor = new Mat();
+		MatOfKeyPoint features = new MatOfKeyPoint();
+		featureDet.detect(a, features);
+		descExtract.compute(a, features, descriptor);
+		metaData.add(descriptor);
+	}
 	}
