@@ -1,4 +1,3 @@
-import com.sun.tools.javac.code.Attribute;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -29,8 +28,9 @@ public class AVPlayer implements ActionListener {
 
     public String videoFileName;
     public String audioFileName;
+    static boolean summarize = false;
 
-    private static final String DEFAULT_LOCATION = "/Users/ayberk/Downloads/Alin_Day1_002";
+    private static final String DEFAULT_LOCATION = "/home/prapthi/Documents/prap/prapthi/prap/USC/Spring2016/project/Alin_Day1_002.zip.crdownload_FILES";
     private static final String DEFAULT_FILENAME = "Alin_Day1_002";
     private static final String DEFAULT_MOVIE = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".rgb";
     private static final String DEFAULT_SOUND = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".wav";
@@ -83,7 +83,16 @@ public class AVPlayer implements ActionListener {
     }
 
     public void initialize() throws InterruptedException{
-        createThreads();
+	if(summarize) {
+	List<Integer> list = new ArrayList<Integer>();
+        for (int i=525; i<=1005; i++) {
+            list.add(i);
+        }
+        playSummarize(list);
+	}
+	else
+	createThreads();
+
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         try {
             File file = new File(videoFileName);
@@ -98,9 +107,9 @@ public class AVPlayer implements ActionListener {
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (IOException e) {
+        } /*catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private void play() {
@@ -178,14 +187,63 @@ public class AVPlayer implements ActionListener {
         }
     }
 
-    public void playSummarize(List<Integer> frames) throws  InterruptedException {
-        videoThread = new Thread(new Runnable() {
+    public void playSummarize(List<Integer> frames) throws InterruptedException {
+	// opens the inputStream
+        FileInputStream inputStream;
+        try {
+            inputStream = new FileInputStream(audioFileName);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
+	
+        // initializes the playSound Object
+	playSound = new PlaySound(inputStream);
+
+	try {
+	    playSound.audioInitialize(frames);
+	} catch (PlayWaveException e) {
+	    e.printStackTrace();
+	    return;
+	}
+	videoThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 playSpecificFrames(frames);
             }
         });
-        videoThread.start();
+	audioThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+	try {
+	    playSound.playSpecificFrames();
+	} catch (PlayWaveException e) {
+	    e.printStackTrace();
+	    return;
+	} catch (InterruptedException e1) {
+	    e1.printStackTrace();
+	}
+    		}
+        });
+
+	timerThread = new Thread(new Runnable() {
+            int counter = 0;
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    counter++;
+                    lbText1.setText(counter + " seconds");
+                }
+            }
+        });
+        /*videoThread.start();
+	audioThread.start();*/
     }
 
     public void playWAV(String filename) throws InterruptedException {
@@ -264,24 +322,33 @@ public class AVPlayer implements ActionListener {
         frame.setVisible(true);
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, PlayWaveException {
         AVPlayer ren = new AVPlayer();
-		if (args.length < 2) {
+		//if (args.length < 2) {
             ren.audioFileName = DEFAULT_SOUND;
             ren.videoFileName = DEFAULT_MOVIE;
-		} else {
+		/*} else {
             ren.audioFileName = args[1];
             ren.videoFileName = args[0];
-        }
+        }*/
+	//System.out.println(args[0]);
+	if(args.length >0 && args[0].equals("zero")) {
+	summarize = true;
+	System.out.println("Summarize is true");
+	}
+
         ren.setDisplay();
-        /*
-        ren.initialize();
+        System.out.println("here in main");
+	/*if(summarize) {
+        System.out.println("here in main, IF block");
+	
         List<Integer> list = new ArrayList<>();
         for (int i=50; i<100; i++) {
             list.add(i);
         }
         ren.playSummarize(list);
-        */
+	}*/
+        
     }
 
     @Override
