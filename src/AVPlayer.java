@@ -332,6 +332,7 @@ public class AVPlayer implements ActionListener {
             ren.videoFileName = args[0];
         }*/
 	//System.out.println(args[0]);
+	//run it as: java AVPlayer zero
 	if(args.length >0 && args[0].equals("zero")) {
 	summarize = true;
 	System.out.println("Summarize is true");
