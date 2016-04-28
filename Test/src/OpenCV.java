@@ -1,3 +1,5 @@
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,10 +10,13 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.util.*;
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 import org.opencv.core.*;
-import org.opencv.core.Size;
 import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.video.Video;
 import org.opencv.videoio.VideoCapture;
@@ -23,16 +28,29 @@ public class OpenCV {
     static ArrayList<Mat> metaData = new ArrayList<Mat>();
     static ArrayList<Mat> YUVImages = new ArrayList<Mat>();
     static ArrayList<Integer> SADValues = new ArrayList<Integer>();
+    static ArrayList<Double> distanceArray = new ArrayList<Double>();
 	static FeatureDetector featureDet;
 	static DescriptorExtractor descExtract;
+	static DescriptorMatcher matcher;
+	static Mat indexDescriptor;
+	static Integer maxMatchCount;
 
-	public static void main( String[] args )
+	// setup display
+	JFrame frame;
+	JLabel lbIm1;
+	JLabel lbIm2;
+	BufferedImage img,indeximg;
+
+	public void initOpevCV( String[] args ) 
 	   {
 		
+		setDisplay();
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		featureDet = FeatureDetector.create(FeatureDetector.BRISK);
-		descExtract = DescriptorExtractor.create(DescriptorExtractor.BRISK);
-		
+		featureDet = FeatureDetector.create(FeatureDetector.ORB);
+		descExtract = DescriptorExtractor.create(DescriptorExtractor.ORB);
+		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE);
+		indexDescriptor = new Mat();
+				
 		int width = 480;
 		int height = 270;
 
@@ -40,22 +58,21 @@ public class OpenCV {
 		Mat RGBframe = new Mat(270, 480, CvType.CV_8UC3);
 		Mat RGBSecondframe = new Mat(270, 480, CvType.CV_8UC3);
         
-
-    	BufferedImage img;
-
         
         ArrayList<Integer> frameIndices = new ArrayList<Integer>();
         
 
-
+        indeximg = new BufferedImage(1280, 720, BufferedImage.TYPE_INT_RGB);
 		img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
 		try {
 			
-			
-			File file = new File("../Yin_Snack/Yin_Snack.rgb");
+			calculateIndexedImageFeatures();
+
+			File file = new File("../Alireza_Day2_003/Alireza_Day2_003.rgb");
 			InputStream is = new FileInputStream(file);
-			//is.skip(575424000);
+			//is.skip(1244160000);
+			
 			
 			//long len = file.length();
 			long len = width*height*3;
@@ -105,8 +122,15 @@ public class OpenCV {
 		                data[ind * 3 + 1] = g;
 		                data[ind * 3 + 2] = r;
 						
+		                
+//		                int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+//						//int pix = ((a << 24) + (r << 16) + (g << 8) + b);
+//						img.setRGB(x,y,pix);
+						
 						ind++;
 						totalBytesRead += 3;
+						
+
 					}
 				}
 				
@@ -115,13 +139,15 @@ public class OpenCV {
 					//RGBframe.release();
 					RGBSecondframe.put(0, 0, data);
 					calculateMetadata(RGBSecondframe);
-					performOpticalAnalysis(RGBframe,RGBSecondframe);
+						//lbIm2.setIcon(new ImageIcon(img));
+
+					//performOpticalAnalysis(RGBframe,RGBSecondframe);
 					
 				}
 				else
 				{
 					RGBframe.put(0, 0, data);
-					calculateMetadata(RGBframe);
+					//calculateMetadata(RGBframe);
 
 				}
 				
@@ -131,6 +157,8 @@ public class OpenCV {
 
 			
 			// get extremas for video histogram
+			// uncomment for summarization
+			/* 
 			 ArrayList<Integer> mins = new ArrayList<Integer>();
 			 ArrayList<Point> intervals = new ArrayList<Point>();
 			 
@@ -252,7 +280,19 @@ public class OpenCV {
 				 j++;
 			 }
 			  
-						System.out.println("yaya here");
+		*/
+			
+		// match features
+			int frameIndexMatch = 0;
+			for(int di =1 ; di < distanceArray.size() ; di++)
+			{
+				if(distanceArray.get(di) > distanceArray.get(frameIndexMatch))
+				{
+					frameIndexMatch = di;
+				}
+			}
+			
+			System.out.println("best frame match is " + frameIndexMatch);
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -331,13 +371,178 @@ public class OpenCV {
 
 	}
 	
-	public static void calculateMetadata(Mat a)
+	public void calculateMetadata(Mat a)
 	{
 		
+		Mat yuvFrame = new Mat();
 		Mat descriptor = new Mat();
 		MatOfKeyPoint features = new MatOfKeyPoint();
+		//MatOfDMatch matches = new MatOfDMatch();
+		ArrayList<MatOfDMatch> matches = new ArrayList<MatOfDMatch>();
+		Imgproc.cvtColor(a,yuvFrame,Imgproc.COLOR_BGR2GRAY,0);
+
+		
 		featureDet.detect(a, features);
 		descExtract.compute(a, features, descriptor);
-		metaData.add(descriptor);
+		matcher.radiusMatch(descriptor,indexDescriptor,matches,180);
+		//DMatch[] matchArr = matches.toArray();
+		double sum = 0;
+		
+		double minDist = 100000,maxDist = 0;
+		
+//		for(int i=0 ; i < matchArr.length ; i++)
+//		{
+//			if(matchArr[i].distance < minDist)
+//				minDist = matchArr[i].distance;
+//			
+//			if(matchArr[i].distance > maxDist)
+//				maxDist = matchArr[i].distance;
+//
+//		}
+//		
+//
+		for(int i=0 ; i < matches.size() ; i++)
+		{
+//			if(matchArr[i].distance < 2*minDist)
+//				sum++;
+			
+			if(matches.get(i).toArray().length > 0)
+				sum++;
+
+		}
+
+		//double normalizedValue = matchArr.length + (1/sum)*100000;
+		distanceArray.add(sum);
+		
+
+		//metaData.add(descriptor);
+	}
+	
+	public void calculateIndexedImageFeatures() throws IOException
+	{
+		try
+		{
+			int width = 1280;
+			int height = 720;
+	
+			File file = new File("../images/Alireza_Day2_003/30598.rgb");
+			InputStream is = new FileInputStream(file);
+			
+
+			//long len = file.length();
+			long len = width*height*3;
+			byte[] bytes = new byte[(int)len];
+			byte[] data = new byte[(int)len];
+			Mat frame = new Mat(height, width, CvType.CV_8UC3);
+			Mat yuvframe = new Mat();
+			
+			int totalBytesRead = 0;
+	
+			int offset = 0;
+			int numRead = 0;
+			
+			while (offset < bytes.length && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+				offset += numRead;
+			}
+			
+			int ind = 0;
+	
+			for(int y = 0; y < height; y++){
+	
+				for(int x = 0; x < width; x++){
+	
+					byte a = 0;
+					byte r = bytes[ind];
+					byte g = bytes[ind+height*width];
+					byte b = bytes[ind+height*width*2]; 
+	
+	                data[ind * 3] = b;
+	                data[ind * 3 + 1] = g;
+	                data[ind * 3 + 2] = r;
+	
+					ind++;
+					
+					int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+					//int pix = ((a << 24) + (r << 16) + (g << 8) + b);
+					indeximg.setRGB(x,y,pix);
+				}
+			}
+	
+			lbIm1.setIcon(new ImageIcon(indeximg));
+
+
+			frame.put(0, 0, data);
+			Imgproc.resize(frame,yuvframe,new Size(480,270));
+
+			
+			MatOfDMatch matches = new MatOfDMatch();
+			MatOfKeyPoint features = new MatOfKeyPoint();
+			featureDet.detect(yuvframe, features);
+			descExtract.compute(yuvframe , features, indexDescriptor);
+			matcher.match(indexDescriptor,indexDescriptor, matches);
+			maxMatchCount = matches.toArray().length;
+			
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+			
+	}
+	
+	public void setDisplay()
+	{
+		// Use labels to display the images
+		frame = new JFrame();
+		GridBagLayout gLayout = new GridBagLayout();
+		frame.getContentPane().setLayout(gLayout);
+
+		JLabel lbText1 = new JLabel("Index");
+		lbText1.setHorizontalAlignment(SwingConstants.CENTER);
+		JLabel lbText2 = new JLabel("Video frame");
+		lbText2.setHorizontalAlignment(SwingConstants.CENTER);
+		lbIm1 = new JLabel();
+		lbIm2 = new JLabel();
+
+
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.anchor = GridBagConstraints.CENTER;
+		c.weightx = 0.5;
+		c.gridx = 0;
+		c.gridy = 0;
+		frame.getContentPane().add(lbText1, c);
+
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.anchor = GridBagConstraints.CENTER;
+		c.weightx = 0.5;
+		c.gridx = 1;
+		c.gridy = 0;
+		frame.getContentPane().add(lbText2, c);
+
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 1;
+		frame.getContentPane().add(lbIm1, c);
+
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 1;
+		frame.getContentPane().add(lbIm2, c);
+
+		frame.pack();
+		frame.setVisible(true);
+
+
+	}
+	public static void main(String[] args) throws InterruptedException {
+//		if (args.length < 2) {
+//		    System.err.println("usage: java -jar AVPlayer.jar [RGB file] [WAV file]");
+//		    return;
+//		}
+		OpenCV test = new OpenCV();
+		test.initOpevCV(args);
 	}
 	}
