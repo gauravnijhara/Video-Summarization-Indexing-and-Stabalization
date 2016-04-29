@@ -26,36 +26,35 @@ import org.opencv.imgproc.*;
 
 public class OpenCV {
 	
-    static ArrayList<Mat> metaData = new ArrayList<Mat>();
+    //static ArrayList<Mat> metaData = new ArrayList<Mat>();
     static ArrayList<Mat> YUVImages = new ArrayList<Mat>();
     static ArrayList<Integer> SADValues = new ArrayList<Integer>();
     static ArrayList<Double> distanceArray = new ArrayList<Double>();
 	static FeatureDetector featureDet;
 	static DescriptorExtractor descExtract;
-	static DescriptorMatcher matcher;
+	//static DescriptorMatcher matcher;
 	static Mat indexDescriptor;
 	static Integer maxMatchCount;
 
 	// setup display
-	JFrame frame;
-	JLabel lbIm1;
-	JLabel lbIm2;
-	BufferedImage img,indeximg;
+//	JFrame frame;
+//	JLabel lbIm1;
+//	JLabel lbIm2;
+//	BufferedImage img,indeximg;
 
-	public void initOpevCV( String[] args ) throws FileNotFoundException, IOException 
+	public void initOpevCV( String[] args ) throws FileNotFoundException, IOException, InterruptedException 
 	   {
 		
 		//setup metadata file
-		String filename = "Yin_Snack" + ".metadata";
-	    File metafile = new File(filename);
-	    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename));
+//		String filename = "Yin_Snack" + ".metadata";
+//	    File metafile = new File(filename);
+//	    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename));
 	    
 	    // load opencv
-		setDisplay();
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		featureDet = FeatureDetector.create(FeatureDetector.ORB);
 		descExtract = DescriptorExtractor.create(DescriptorExtractor.ORB);
-		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE);
+		//matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE);
 		indexDescriptor = new Mat();
 				
 		int width = 480;
@@ -69,12 +68,12 @@ public class OpenCV {
         ArrayList<Integer> frameIndices = new ArrayList<Integer>();
         
 
-        indeximg = new BufferedImage(1280, 720, BufferedImage.TYPE_INT_RGB);
-		img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        //indeximg = new BufferedImage(1280, 720, BufferedImage.TYPE_INT_RGB);
+		//img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
 		try {
 			
-			File file = new File("../Yin_Snack/Yin_Snack.rgb");
+			File file = new File("../Alin_Day1_003/Alin_Day1_003.rgb");
 			InputStream is = new FileInputStream(file);
 			//is.skip(1244160000);
 			
@@ -103,10 +102,6 @@ public class OpenCV {
 				RGBSecondframe.release();
 				RGBSecondframe = new Mat(270, 480, CvType.CV_8UC3);
 				
-//				if(i == 1480)
-//				{
-//					System.out.println("yaya here");
-//				}
 				
 				while (offset < bytes.length && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
 					offset += numRead;
@@ -143,16 +138,16 @@ public class OpenCV {
 				{
 					//RGBframe.release();
 					RGBSecondframe.put(0, 0, data);
-					calculateMetadata(RGBSecondframe, oos);
+					//calculateMetadata(RGBSecondframe, oos);
 						//lbIm2.setIcon(new ImageIcon(img));
 
-					//performOpticalAnalysis(RGBframe,RGBSecondframe);
+					performOpticalAnalysis(RGBframe,RGBSecondframe);
 					
 				}
 				else
 				{
 					RGBframe.put(0, 0, data);
-					calculateMetadata(RGBframe, oos);
+					//calculateMetadata(RGBframe, oos);
 
 				}
 				
@@ -163,15 +158,10 @@ public class OpenCV {
 			
 			// get extremas for video histogram
 			// uncomment for summarization
-			/* 
+			 
 			 ArrayList<Integer> mins = new ArrayList<Integer>();
 			 ArrayList<Point> intervals = new ArrayList<Point>();
-			 
-			 mins.add(0);
-			 
-			 int index = 0;
-			 int prevValue = SADValues.get(index++);
-			 int value = SADValues.get(index);
+						 
 			 
 			 double avg = 0.0;
 			 for(int s = 0 ; s < 4499 ; s++)
@@ -180,127 +170,147 @@ public class OpenCV {
 			 }
 			 
 			 avg /= 4499;
-			 avg *= 2.80;
+			 avg *= 2.75;
 			 
-			 if(avg > 6000)
-				 avg = 6000;
-
-			 while(index+1 < SADValues.size())
-			 {
-				 if(prevValue > value)
-				 {
-					 int startValue = prevValue;
-					 prevValue = value;
-					 value = SADValues.get(++index);
-					 
-					 while(index+1 < SADValues.size() && prevValue > value)
-					 {
-						 index++;
-						 prevValue = value;
-						 value = SADValues.get(index);
-
-					 }
-					 
-					 if(Math.abs(startValue - prevValue) > avg)
-						 mins.add(index-1);
-				 }
-				 else
-				 {
-					 int startValue = prevValue;
-					 prevValue = value;
-					 value = SADValues.get(++index);
-					 
-					 while(index+1 < SADValues.size() && prevValue < value)
-					 {
-						
-						 index++;
-						 prevValue = value;
-						 value = SADValues.get(index);
-					 }
-					 
-					 if(Math.abs(startValue - prevValue) > avg)
-						 mins.add(index-1);
-				 }
-			 }
-			 
-			 mins.add(4499);
-			 
+			 int increment = 0;
 			 int totalFrameNum = 0;
-			 //process range
-			 int j = 0;
-			 while(j < mins.size())
+
+			 
+			 while(totalFrameNum < 1275 || totalFrameNum > 1425)
 			 {
-				 int frameCount = 0;
-				 Point temp = new Point();
-				 temp.x = mins.get(j);
-				 while(j+1 < mins.size() && (( mins.get(j+1) - mins.get(j) ) < 150 ))
-				 {
-					 j++;
-					 frameCount++;
-				 }
+				 int index = 0;
+				 int prevValue = SADValues.get(index++);
+				 int value = SADValues.get(index);
 				 
-				 if(frameCount == 0)
-				 {
-					if(temp.x == 4499)
-					{
-						temp.x -= 45;
-						temp.y = 4499;
-					}
-					else
-					{
-						temp.y = temp.x + 45;
-					}
-				 }
+				 //trying different averages
+				 if(totalFrameNum < 1275)
+					 avg = avg - avg*.05;
 				 else
+					 avg = avg + avg*.05;
+				 
+				 totalFrameNum = 0;
+				mins.removeAll(mins);
+				intervals.removeAll(intervals);
+				
+				mins.add(0);
+				
+				 while(index+1 < SADValues.size())
 				 {
-					 temp.y = mins.get(j);
-					 if((4499 - temp.y) < 60)
+					 if(prevValue > value)
 					 {
-						temp.y = 4499;
-						j = mins.size();
+						 int startValue = prevValue;
+						 prevValue = value;
+						 value = SADValues.get(++index);
+						 
+						 while(index+1 < SADValues.size() && prevValue > value)
+						 {
+							 index++;
+							 prevValue = value;
+							 value = SADValues.get(index);
+	
+						 }
+						 
+						 if(Math.abs(startValue - prevValue) > avg)
+							 mins.add(index-1);
+					 }
+					 else
+					 {
+						 int startValue = prevValue;
+						 prevValue = value;
+						 value = SADValues.get(++index);
+						 
+						 while(index+1 < SADValues.size() && prevValue < value)
+						 {
+							
+							 index++;
+							 prevValue = value;
+							 value = SADValues.get(index);
+						 }
+						 
+						 if(Math.abs(startValue - prevValue) > avg)
+							 mins.add(index-1);
 					 }
 				 }
 				 
-				 // round off to seconds boundaries
-				 int remX = (int)(temp.x%15);
-				 temp.x -= remX;
-				 temp.x = (temp.x != 0)?temp.x-1:temp.x;
+				 mins.add(4499);
 				 
-				 if(temp.y != 4499)
+				 //process range
+				 int j = 0;
+				 while(j < mins.size())
 				 {
-					 int remY = (int)(temp.y%15);
-					 temp.y += (15-remY);
-					 temp.y--;
+					 int frameCount = 0;
+					 Point temp = new Point();
+					 temp.x = mins.get(j);
+					 while(j+1 < mins.size() && (( mins.get(j+1) - mins.get(j) ) < 150 ))
+					 {
+						 j++;
+						 frameCount++;
+					 }
+					 
+					 if(frameCount == 0)
+					 {
+						if(temp.x == 4499)
+						{
+							temp.x -= 45;
+							temp.y = 4499;
+						}
+						else
+						{
+							temp.y = temp.x + 45;
+						}
+					 }
+					 else
+					 {
+						 temp.y = mins.get(j);
+						 if((4499 - temp.y) < 60)
+						 {
+							temp.y = 4499;
+							j = mins.size();
+						 }
+					 }
+					 
+					 // round off to seconds boundaries
+					 int remX = (int)(temp.x%15);
+					 temp.x -= remX;
+					 temp.x = (temp.x != 0)?temp.x-1:temp.x;
+					 
+					 if(temp.y != 4499)
+					 {
+						 int remY = (int)(temp.y%15);
+						 temp.y += (15-remY);
+						 temp.y--;
+					 }
+					 
+					 if((temp.y - temp.x) < 60)
+					 {
+						 int diff = (int) (60 - (temp.y - temp.x));
+						 temp.y += diff;
+					 }
+					 
+					 totalFrameNum += temp.y - temp.x;
+					 intervals.add(temp);
+					 
+					 j++;
 				 }
-				 
-				 if((temp.y - temp.x) < 60)
-				 {
-					 int diff = (int) (60 - (temp.y - temp.x));
-					 temp.y += diff;
-				 }
-				 
-				 totalFrameNum += temp.y - temp.x;
-				 intervals.add(temp);
-				 
-				 j++;
 			 }
-			  
-		*/
+			 
+			 
+			ArrayList<Integer> summaryInput = new ArrayList<Integer>();
 			
-		// match features
-			int frameIndexMatch = 0;
-			for(int di =1 ; di < distanceArray.size() ; di++)
+			for(int i = 0 ; i < intervals.size() ; i++)
 			{
-				if(distanceArray.get(di) > distanceArray.get(frameIndexMatch))
-				{
-					frameIndexMatch = di;
-				}
+				 Point temp = intervals.get(i);
+				 for(int j1 = (int) temp.x ; j1 <= temp.y ; j1++)
+				 {
+					 summaryInput.add(j1);
+				 }
 			}
 			
-			oos.close();
-			
-			System.out.println("best frame match is " + frameIndexMatch);
-			
+			AVPlayer player = new AVPlayer();
+			player.summarize("../Alin_Day1_003/Alin_Day1_003.rgb","../Alin_Day1_003/Alin_Day1_003.wav",summaryInput);
+			player.setDisplay();
+			//oos.close();
+						
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -342,26 +352,7 @@ public class OpenCV {
 		    int it = 0,sadVal = 0;
 		    while(it < errFound.length)
 		    {
-//		    	if(i > 1600)
-//				 {
-//					System.out.println("yaya here");
-//				 }
-		    	
-//		    	if((statusFound[it] == 1))
-//		    	{
-//		    		sadVal += (int) Math.abs(newPoints[it].x - oldPoints[it].x) + (int) Math.abs(newPoints[it].y - oldPoints[it].y);
-//		    	}
-//		    	else
-//		    	{
-//		    		int xOffset = (int) (width/2 - oldPoints[it].x);
-//		    		xOffset = xOffset<0?((width/2 + xOffset)):xOffset;
-//		    		int yOffset = (int) (height/2 - oldPoints[it].y);
-//		    		yOffset = yOffset<0?((height/2 + yOffset)):yOffset;
-//
-//		    		sadVal += (xOffset + yOffset);
-//		    	}
 		    	sadVal += errFound[it];
-		    	
 		    	it++;
 		    }
 		    
@@ -393,65 +384,8 @@ public class OpenCV {
 		saveMat(descriptor,oos);
 		
 		
-//		matcher.radiusMatch(descriptor,indexDescriptor,matches,180);
-//		double sum = 0;		
-//
-//		for(int i=0 ; i < matches.size() ; i++)
-//		{			
-//			if(matches.get(i).toArray().length > 0)
-//				sum++;
-//		}
-//		distanceArray.add(sum);
-		
 	}
-	
 		
-	public void setDisplay()
-	{
-		// Use labels to display the images
-		frame = new JFrame();
-		GridBagLayout gLayout = new GridBagLayout();
-		frame.getContentPane().setLayout(gLayout);
-
-		JLabel lbText1 = new JLabel("Index");
-		lbText1.setHorizontalAlignment(SwingConstants.CENTER);
-		JLabel lbText2 = new JLabel("Video frame");
-		lbText2.setHorizontalAlignment(SwingConstants.CENTER);
-		lbIm1 = new JLabel();
-		lbIm2 = new JLabel();
-
-
-		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.anchor = GridBagConstraints.CENTER;
-		c.weightx = 0.5;
-		c.gridx = 0;
-		c.gridy = 0;
-		frame.getContentPane().add(lbText1, c);
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.anchor = GridBagConstraints.CENTER;
-		c.weightx = 0.5;
-		c.gridx = 1;
-		c.gridy = 0;
-		frame.getContentPane().add(lbText2, c);
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 1;
-		frame.getContentPane().add(lbIm1, c);
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 1;
-		frame.getContentPane().add(lbIm2, c);
-
-		frame.pack();
-		frame.setVisible(true);
-
-
-	}
-	
 	public final void saveMat(Mat mat , ObjectOutputStream oos) {
 	    try {
 	    	
