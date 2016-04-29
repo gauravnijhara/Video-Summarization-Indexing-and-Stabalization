@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.*;
 import javax.swing.ImageIcon;
@@ -41,9 +42,15 @@ public class OpenCV {
 	JLabel lbIm2;
 	BufferedImage img,indeximg;
 
-	public void initOpevCV( String[] args ) 
+	public void initOpevCV( String[] args ) throws FileNotFoundException, IOException 
 	   {
 		
+		//setup metadata file
+		String filename = "Yin_Snack" + ".metadata";
+	    File metafile = new File(filename);
+	    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename));
+	    
+	    // load opencv
 		setDisplay();
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		featureDet = FeatureDetector.create(FeatureDetector.ORB);
@@ -67,9 +74,7 @@ public class OpenCV {
 
 		try {
 			
-			calculateIndexedImageFeatures();
-
-			File file = new File("../Alireza_Day2_003/Alireza_Day2_003.rgb");
+			File file = new File("../Yin_Snack/Yin_Snack.rgb");
 			InputStream is = new FileInputStream(file);
 			//is.skip(1244160000);
 			
@@ -138,7 +143,7 @@ public class OpenCV {
 				{
 					//RGBframe.release();
 					RGBSecondframe.put(0, 0, data);
-					calculateMetadata(RGBSecondframe);
+					calculateMetadata(RGBSecondframe, oos);
 						//lbIm2.setIcon(new ImageIcon(img));
 
 					//performOpticalAnalysis(RGBframe,RGBSecondframe);
@@ -147,7 +152,7 @@ public class OpenCV {
 				else
 				{
 					RGBframe.put(0, 0, data);
-					//calculateMetadata(RGBframe);
+					calculateMetadata(RGBframe, oos);
 
 				}
 				
@@ -292,6 +297,8 @@ public class OpenCV {
 				}
 			}
 			
+			oos.close();
+			
 			System.out.println("best frame match is " + frameIndexMatch);
 			
 		} catch (FileNotFoundException e) {
@@ -371,127 +378,34 @@ public class OpenCV {
 
 	}
 	
-	public void calculateMetadata(Mat a)
+	public void calculateMetadata(Mat a,ObjectOutputStream oos)
 	{
 		
 		Mat yuvFrame = new Mat();
 		Mat descriptor = new Mat();
 		MatOfKeyPoint features = new MatOfKeyPoint();
-		//MatOfDMatch matches = new MatOfDMatch();
 		ArrayList<MatOfDMatch> matches = new ArrayList<MatOfDMatch>();
 		Imgproc.cvtColor(a,yuvFrame,Imgproc.COLOR_BGR2GRAY,0);
 
 		
 		featureDet.detect(a, features);
 		descExtract.compute(a, features, descriptor);
-		matcher.radiusMatch(descriptor,indexDescriptor,matches,180);
-		//DMatch[] matchArr = matches.toArray();
-		double sum = 0;
+		saveMat(descriptor,oos);
 		
-		double minDist = 100000,maxDist = 0;
 		
-//		for(int i=0 ; i < matchArr.length ; i++)
-//		{
-//			if(matchArr[i].distance < minDist)
-//				minDist = matchArr[i].distance;
-//			
-//			if(matchArr[i].distance > maxDist)
-//				maxDist = matchArr[i].distance;
+//		matcher.radiusMatch(descriptor,indexDescriptor,matches,180);
+//		double sum = 0;		
 //
-//		}
-//		
-//
-		for(int i=0 ; i < matches.size() ; i++)
-		{
-//			if(matchArr[i].distance < 2*minDist)
+//		for(int i=0 ; i < matches.size() ; i++)
+//		{			
+//			if(matches.get(i).toArray().length > 0)
 //				sum++;
-			
-			if(matches.get(i).toArray().length > 0)
-				sum++;
-
-		}
-
-		//double normalizedValue = matchArr.length + (1/sum)*100000;
-		distanceArray.add(sum);
+//		}
+//		distanceArray.add(sum);
 		
-
-		//metaData.add(descriptor);
 	}
 	
-	public void calculateIndexedImageFeatures() throws IOException
-	{
-		try
-		{
-			int width = 1280;
-			int height = 720;
-	
-			File file = new File("../images/Alireza_Day2_003/30598.rgb");
-			InputStream is = new FileInputStream(file);
-			
-
-			//long len = file.length();
-			long len = width*height*3;
-			byte[] bytes = new byte[(int)len];
-			byte[] data = new byte[(int)len];
-			Mat frame = new Mat(height, width, CvType.CV_8UC3);
-			Mat yuvframe = new Mat();
-			
-			int totalBytesRead = 0;
-	
-			int offset = 0;
-			int numRead = 0;
-			
-			while (offset < bytes.length && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
-				offset += numRead;
-			}
-			
-			int ind = 0;
-	
-			for(int y = 0; y < height; y++){
-	
-				for(int x = 0; x < width; x++){
-	
-					byte a = 0;
-					byte r = bytes[ind];
-					byte g = bytes[ind+height*width];
-					byte b = bytes[ind+height*width*2]; 
-	
-	                data[ind * 3] = b;
-	                data[ind * 3 + 1] = g;
-	                data[ind * 3 + 2] = r;
-	
-					ind++;
-					
-					int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
-					//int pix = ((a << 24) + (r << 16) + (g << 8) + b);
-					indeximg.setRGB(x,y,pix);
-				}
-			}
-	
-			lbIm1.setIcon(new ImageIcon(indeximg));
-
-
-			frame.put(0, 0, data);
-			Imgproc.resize(frame,yuvframe,new Size(480,270));
-
-			
-			MatOfDMatch matches = new MatOfDMatch();
-			MatOfKeyPoint features = new MatOfKeyPoint();
-			featureDet.detect(yuvframe, features);
-			descExtract.compute(yuvframe , features, indexDescriptor);
-			matcher.match(indexDescriptor,indexDescriptor, matches);
-			maxMatchCount = matches.toArray().length;
-			
-			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		
-			
-	}
-	
 	public void setDisplay()
 	{
 		// Use labels to display the images
@@ -537,7 +451,23 @@ public class OpenCV {
 
 
 	}
-	public static void main(String[] args) throws InterruptedException {
+	
+	public final void saveMat(Mat mat , ObjectOutputStream oos) {
+	    try {
+	    	
+	        int cols = mat.cols();
+	        byte[] data = new byte[(int) mat.total() * mat.channels()];
+	        mat.get(0, 0, data);
+            oos.writeObject(cols);
+	        oos.writeObject(data);
+	        oos.reset();
+	        
+	    } catch (IOException | ClassCastException ex) {
+	        System.err.println("ERROR: Could not save mat to file: ");
+	    }
+	}
+	
+	public static void main(String[] args) throws InterruptedException, FileNotFoundException, IOException {
 //		if (args.length < 2) {
 //		    System.err.println("usage: java -jar AVPlayer.jar [RGB file] [WAV file]");
 //		    return;
