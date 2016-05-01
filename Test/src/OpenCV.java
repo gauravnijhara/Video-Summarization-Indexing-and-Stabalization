@@ -73,7 +73,7 @@ public class OpenCV {
 
 		try {
 			
-			File file = new File("../Alin_Day1_003/Alin_Day1_003.rgb");
+			File file = new File("../Alin_Day1_002/Alin_Day1_002.rgb");
 			InputStream is = new FileInputStream(file);
 			//is.skip(1244160000);
 			
@@ -170,13 +170,13 @@ public class OpenCV {
 			 }
 			 
 			 avg /= 4499;
-			 avg *= 2.75;
+			 avg *= 2.775;
 			 
 			 int increment = 0;
 			 int totalFrameNum = 0;
 
 			 
-			 while(totalFrameNum < 1275 || totalFrameNum > 1425)
+			 while(totalFrameNum < 1335 || totalFrameNum > 1365)
 			 {
 				 int index = 0;
 				 int prevValue = SADValues.get(index++);
@@ -300,14 +300,14 @@ public class OpenCV {
 			for(int i = 0 ; i < intervals.size() ; i++)
 			{
 				 Point temp = intervals.get(i);
-				 for(int j1 = (int) temp.x ; j1 <= temp.y ; j1++)
+				 for(int j1 = (int) temp.x +1 ; j1 <= temp.y ; j1++)
 				 {
 					 summaryInput.add(j1);
 				 }
 			}
 			
 			AVPlayer player = new AVPlayer();
-			player.summarize("../Alin_Day1_003/Alin_Day1_003.rgb","../Alin_Day1_003/Alin_Day1_003.wav",summaryInput);
+			player.summarize("../Alin_Day1_002/Alin_Day1_002.rgb","../Alin_Day1_002/Alin_Day1_002.wav",summaryInput);
 			player.setDisplay();
 			//oos.close();
 						

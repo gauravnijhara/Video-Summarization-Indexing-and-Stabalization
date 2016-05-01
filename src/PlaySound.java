@@ -86,8 +86,56 @@ public class PlaySound {
 
     }
 
+	public void play() throws PlayWaveException, InterruptedException {
 
+	AudioInputStream audioInputStream = null;
+	try {
+	    audioInputStream = AudioSystem.getAudioInputStream(this.waveStream);
+	} catch (UnsupportedAudioFileException e1) {
+	    throw new PlayWaveException(e1);
+	} catch (IOException e1) {
+	    throw new PlayWaveException(e1);
+	}
 
+	// Obtain the information about the AudioInputStream
+	audioFormat = audioInputStream.getFormat();
+	info = new Info(SourceDataLine.class, audioFormat);
+	this.sampleRate = audioFormat.getSampleRate();
+System.out.println("sampleRate = "+this.sampleRate);
+	// opens the audio channel
+	dataLine = null;
+	try {
+//dataLine has audio bytes
+	    dataLine = (SourceDataLine) AudioSystem.getLine(info);
+	    dataLine.open(audioFormat, this.EXTERNAL_BUFFER_SIZE);
+	} catch (LineUnavailableException e1) {
+	    throw new PlayWaveException(e1);
+	}
+
+	// Starts the music :P
+	dataLine.start();
+	int readBytes = 0;
+	byte[] audioBuffer = new byte[this.EXTERNAL_BUFFER_SIZE];
+
+	try {
+	    while (readBytes != -1) {
+//reads audioBuffer.length(EXTERNAL_BUFFER_SIZE) of bytes into audioBuffer
+            readBytes = audioInputStream.read(audioBuffer, 0, audioBuffer.length);
+            if (readBytes >= 0){
+                dataLine.write(audioBuffer, 0, readBytes);
+				int rate = (int)sampleRate / 15;
+				//sleep(1000/rate);
+            }
+	    }
+	} catch (IOException e1) {
+	    throw new PlayWaveException(e1);
+	} finally {
+	    // plays what's left and and closes the audioChannel
+	    dataLine.drain();
+	    dataLine.close();
+	}
+
+    }
 
 	public void playSpecificFrames() throws PlayWaveException, InterruptedException {
 		dataLine = null;
@@ -104,13 +152,13 @@ public class PlaySound {
 		byte[] audioBuffer = new byte[this.EXTERNAL_BUFFER_SIZE];
 		try {
 		    while (index < arrSize) {
-			long lStartTime = System.currentTimeMillis();
+			//long lStartTime = System.currentTimeMillis();
 		        dataLine.write(summarizedByte, index, EXTERNAL_BUFFER_SIZE);
 			index+=EXTERNAL_BUFFER_SIZE;
-			long difference = (1000/15) - (System.currentTimeMillis() - lStartTime);
+			/*long difference = (1000/15) - (System.currentTimeMillis() - lStartTime);
 			    if(difference>0) {
 				sleep(difference);
-			    }
+			    }*/
 
 		    }
 		} /*catch (IOException e1) {

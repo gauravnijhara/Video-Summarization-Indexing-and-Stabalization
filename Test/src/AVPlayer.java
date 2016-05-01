@@ -93,6 +93,109 @@ public class AVPlayer implements ActionListener {
             }
         });
     }
+//for the entire video
+    private void play() {
+        for( int i = currentFrame; i < numberOfFrames; i++) {
+            long lStartTime = System.currentTimeMillis();
+            readFrame();
+            try {
+                long difference = (65) - (System.currentTimeMillis() - lStartTime);
+                if(difference>0) {
+                    sleep(difference);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+	timerThread.suspend();
+    }
+//for the entire video
+    private void readFrame() {
+        int offset = 0;
+        int numRead = 0;
+
+        try {
+            while (offset < bytes.length && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
+                offset += numRead;
+            }
+
+            int ind = 0;
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+
+                    byte a = 0;
+                    byte r = bytes[ind];
+                    byte g = bytes[ind + height * width];
+                    byte b = bytes[ind + height * width * 2];
+
+                    int pix = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+                    //int pix = ((a << 24) + (r << 16) + (g << 8) + b);
+                    img.setRGB(x, y, pix);
+                    ind++;
+                }
+            }
+            lbIm1.setIcon(new ImageIcon(img));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+//for the entire video
+    private void createThreadsFV() {
+        videoThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                play();
+            }
+        });
+
+        audioThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    playWAV(audioFileName);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        timerThread = new Thread(new Runnable() {
+            int counter = 0;
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    counter++;
+                    lbText1.setText(counter + " seconds");
+                }
+            }
+        });
+    }
+    public void initialize() throws InterruptedException{
+	createThreadsFV();
+
+        img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        try {
+            File file = new File(videoFileName);
+            is = new FileInputStream(file);
+
+            //long len = file.length();
+            long len = width*height*3;
+            numberOfFrames = file.length() / len;
+            bytes = new byte[(int)len];
+
+            int totalBytesRead = 0;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } /*catch (IOException e) {
+            e.printStackTrace();
+        }*/
+    }
 
 public void videoInitialize(List<Integer> frames) 
 {
@@ -133,11 +236,12 @@ int ind=0;
 		    long lStartTime = System.currentTimeMillis();
 		    readFrameSum(ind);
 		    ind+=width*height*3;
-		    long difference = 66 - (System.currentTimeMillis() - lStartTime);
+		    long difference = (65) - (System.currentTimeMillis() - lStartTime);
 		    if(difference>0) {
 		        sleep(difference);
 		    }
             }
+	timerThread.suspend();
     }
 public void readFrameSum(int ind) {
     for (int y = 0; y < height; y++) {
@@ -154,6 +258,28 @@ public void readFrameSum(int ind) {
         }
     }lbIm1.setIcon(new ImageIcon(img));
 }
+
+    public void playWAV(String filename) throws InterruptedException {
+        // opens the inputStream
+        FileInputStream inputStream;
+        try {
+            inputStream = new FileInputStream(filename);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // initializes the playSound Object
+        playSound = new PlaySound(inputStream);
+        //this.audioPerFrame = playSound.getSampleRate()/FRAME_RATE;
+        // plays the sound
+        try {
+            playSound.play();
+        } catch (PlayWaveException e) {
+            e.printStackTrace();
+            return;
+        }
+    }
 
     public void setDisplay()
     {
@@ -211,8 +337,8 @@ public void readFrameSum(int ind) {
     public void summarize(String videoFileName, String audioFileName, ArrayList<Integer> input) throws InterruptedException {
 	img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         try {
-        	ren = this;
-        	list = new ArrayList<Integer>(input);
+	ren = this;
+	list = new ArrayList<Integer>(input);
             File file = new File(videoFileName);
             is = new FileInputStream(file);
 
@@ -229,21 +355,24 @@ public void readFrameSum(int ind) {
 
 	FileInputStream inputStream;
         try {
-            inputStream = new FileInputStream(audioFileName);
+	File afile = new File(audioFileName);
+            inputStream = new FileInputStream(afile);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return;
         }
 	// initializes the playSound Object
 	playSound = new PlaySound(inputStream);
-//	list = new ArrayList<Integer>();
-//        for (int i=4350; i<4500; i++) {
-//            list.add(i);
-//        }
-
+	/*for (int i=1; i<150; i++) {
+            list.add(i);
+        }
+        for (int i=450; i<600; i++) {
+            list.add(i);
+        }*/
+       System.out.println("HERE!!"+list.size());
 	try {
 	    playSound.audioInitialize(list);
-	    this.videoInitialize(list);
+	    ren.videoInitialize(list);
 	} catch (PlayWaveException e) {
 	    e.printStackTrace();
 	    return;
@@ -252,7 +381,8 @@ public void readFrameSum(int ind) {
 	//videoInitialize(list);
     }
     public static void main(String[] args) throws InterruptedException, PlayWaveException {
-        ren = new AVPlayer();
+	AVPlayer ab = new AVPlayer();
+/*        ren = new AVPlayer();
 		//if (args.length < 2) {
             ren.audioFileName = DEFAULT_SOUND;
             ren.videoFileName = DEFAULT_MOVIE;
@@ -262,10 +392,19 @@ public void readFrameSum(int ind) {
         }*/
 	//System.out.println(args[0]);
 	//run it as: java AVPlayer zero
-	
-         //   ren.summarize(audioFileName, audioFileName, null);
+	ArrayList<Integer> input = new ArrayList<Integer>();
+	for(int i=1; i<=150; i++) {
+		input.add(i);	
+	}
+	for(int i=301; i<=450; i++) {
+		input.add(i);	
+	}
 
-        ren.setDisplay();
+	summarize = true;
+	if(summarize)
+	ab.summarize("../Alin_Day1_002/Alin_Day1_002.rgb", "../Alin_Day1_002/Alin_Day1_002.wav", input);
+
+        ab.setDisplay();
 	/*if(summarize) {
         System.out.println("here in main, IF block");
 	
@@ -282,12 +421,17 @@ public void readFrameSum(int ind) {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == playPauseButton) {
             if (status == PlayerStatus.STOPPED) {
+		    try {
+		    if(summarize)
                     createThreads();
+		    else
+		    initialize();
                     status = PlayerStatus.PAUSED;
                     currentFrame = 0;
                     startThreads();
-               
-
+		    } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                    }
             }
             if (status == PlayerStatus.PAUSED) {
                 status = PlayerStatus.PLAYING;
@@ -307,8 +451,7 @@ public void readFrameSum(int ind) {
         }
     }
 
-    @SuppressWarnings("deprecation")
-	private void suspendThreads() {
+    private void suspendThreads() {
         videoThread.suspend();
         audioThread.suspend();
         timerThread.suspend();
@@ -320,8 +463,7 @@ public void readFrameSum(int ind) {
         timerThread.start();
     }
 
-    @SuppressWarnings("deprecation")
-	private void resumeThreads() {
+    private void resumeThreads() {
         videoThread.resume();
         audioThread.resume();
         timerThread.resume();
