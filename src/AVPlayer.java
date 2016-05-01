@@ -32,7 +32,7 @@ public class AVPlayer implements ActionListener {
     static boolean summarize = false;
     byte[] summarizedVidByte;
 
-    private static final String DEFAULT_LOCATION = "/home/prapthi/Documents/prap/prapthi/prap/USC/Spring2016/project/Alin_Day1_002.zip.crdownload_FILES";
+    private static final String DEFAULT_LOCATION = "/Users/ayberk/Downloads/Alin_Day1_002";
     private static final String DEFAULT_FILENAME = "Alin_Day1_002";
     private static final String DEFAULT_MOVIE = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".rgb";
     private static final String DEFAULT_SOUND = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".wav";
@@ -234,6 +234,7 @@ public void readFrameSum(int ind) {
         }
 	// initializes the playSound Object
 	playSound = new PlaySound(inputStream);
+        playSound.fileName = audioFileName;
 	list = new ArrayList<Integer>();
         for (int i=4350; i<4500; i++) {
             list.add(i);
@@ -260,10 +261,16 @@ public void readFrameSum(int ind) {
         }*/
 	//System.out.println(args[0]);
 	//run it as: java AVPlayer zero
-	
-	ren.summarize();
 
-        ren.setDisplay();
+        try {
+            System.out.println(PlaySound.getDominantFrequency(DEFAULT_SOUND));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+//	ren.summarize();
+
+//        ren.setDisplay();
 	/*if(summarize) {
         System.out.println("here in main, IF block");
 	

@@ -1,9 +1,6 @@
 //package org.wikijava.sound.playWave;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -24,12 +21,14 @@ import static java.lang.Thread.sleep;
  */
 public class PlaySound {
 
-    	private InputStream waveStream;
+	AudioInputStream audioInputStream = null;
+    private InputStream waveStream;
 	private float sampleRate;
 	private SourceDataLine dataLine;
 	byte[] summarizedByte;
-	private AudioFormat audioFormat;
+	private static AudioFormat audioFormat;
 	private Info info;
+	public String fileName;
     //private final int EXTERNAL_BUFFER_SIZE = 524288; // 128Kb
 
 	//24000 samples per second, 24000/15 samples per frame, that*2 bytes
@@ -45,7 +44,7 @@ public class PlaySound {
 
 	public void audioInitialize(List<Integer> frames) throws PlayWaveException, InterruptedException {
 	//Copying bytes from required frames in to summarizedByte byte array
-	AudioInputStream audioInputStream = null;
+
 	try {
 	    audioInputStream = AudioSystem.getAudioInputStream(this.waveStream);
 	} catch (UnsupportedAudioFileException e1) {
@@ -120,5 +119,21 @@ public class PlaySound {
 		    dataLine.drain();
 		    dataLine.close();
 		}
+	}
+
+	public static float getDominantFrequency(String fileName) throws Exception {
+		WaveDecoder decoder = new WaveDecoder(new FileInputStream(fileName));
+		FFT fft = new FFT(4096, audioFormat.getSampleRate());
+		float[] samples = new float[4096];
+
+		float max = -1;
+		while (decoder.readSamples(samples) > 0) {
+			fft.forward(samples);
+
+			for (int i = 0; i < fft.getSpectrum().length; i++)
+				if (max < fft.getSpectrum()[i]) max = fft.getSpectrum()[i];
+		}
+
+		return max;
 	}
 }
