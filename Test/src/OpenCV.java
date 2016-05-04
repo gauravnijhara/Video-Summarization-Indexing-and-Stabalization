@@ -35,6 +35,7 @@ public class OpenCV {
 	//static DescriptorMatcher matcher;
 	static Mat indexDescriptor;
 	static Integer maxMatchCount;
+	private FileInputStream inputStream;
 
 	// setup display
 //	JFrame frame;
@@ -401,12 +402,105 @@ public class OpenCV {
 	    }
 	}
 	
+	public void processAudio(String audioFileName) throws FileNotFoundException
+	{
+		File afile = new File(audioFileName);
+		inputStream = new FileInputStream(afile);
+		 ArrayList<Point> intervals = new ArrayList<Point>();
+		 ArrayList<Integer> freqs = new ArrayList<Integer>();
+		 ArrayList<Integer> rfreqs = new ArrayList<Integer>();
+
+		int readBytes = 0;
+		byte[] audioBuffer = new byte[3200];
+		for(int j = 0 ; j < 4500 ; j++)
+		{
+			try {
+		//reads audioBuffer.length(EXTERNAL_BUFFER_SIZE) of bytes into audioBuffer
+	            readBytes = inputStream.read(audioBuffer, 0, audioBuffer.length);
+	            if (readBytes >= 0){
+					//sleep(1000/rate);
+	            	double[] x = new double[2048];
+	            	double[] y = new double[2048];
+	            	
+	            	for(int i= 0 ; i < 2048 ; i++)
+	            	{
+	            		if(i < 1600)
+	            		{
+	            			int tmp = audioBuffer[i]*256 + audioBuffer[i+1];
+	            			x[i] = (double)tmp;
+	            		}
+	            		else
+	            			x[i] = 0;
+	            		
+	            		y[i] = 0;
+	            	}
+	            	
+	                FFT fft = new FFT(2048);
+	                double[] window = fft.getWindow();
+	                fft.beforeAfter(fft,x,y);
+	                
+	                double max = 0;
+	                int index = 0;
+	                for(int i= 1 ; i < 2048 ; i++)
+	            	{
+	                	double temp = Math.sqrt(x[i]*x[i] + y[i]*y[i]);
+	                	if(temp > max)
+	                	{
+	                		max= temp;
+	                		index = i;
+	                	}
+	            	}
+	                
+	                int freq = (index * 24000) /2048;
+	                rfreqs.add(freq/2);
+	               // System.out.println("Max frequency for " + j + " frame is " + max);
+			    }
+			} catch (IOException e1) {
+			} finally {
+			    // plays what's left and and closes the audioChannel
+			}
+		}
+		
+		for(int m = 0 ; m < 300 ; m++)
+		{
+			int avg = 0;
+			for(int n = 0 ; n < 15 ; n++)
+			{
+				avg += rfreqs.get(m+n);
+			}
+			freqs.add((int)(avg/15));
+		}
+		//process results
+		int i = 0;
+		while(i < 300)
+		{
+			
+			if(freqs.get(i) < 200 || freqs.get(i) > 5000)
+			{
+				Point p = new Point();
+				p.x = i;
+				
+				while(i < 299 && (freqs.get(i) < 200 || freqs.get(i) > 5000))
+					i++;
+				
+				p.y = i-1;
+				if((p.y - p.x) > 5)
+					intervals.add(p);
+			}
+		
+			i++;
+		}
+		
+        System.out.println("Max frequency for ");
+
+	}
 	public static void main(String[] args) throws InterruptedException, FileNotFoundException, IOException {
 //		if (args.length < 2) {
 //		    System.err.println("usage: java -jar AVPlayer.jar [RGB file] [WAV file]");
 //		    return;
 //		}
 		OpenCV test = new OpenCV();
-		test.initOpevCV(args);
+//		test.initOpevCV(args);
+		test.processAudio("../Alin_Day1_002/Alin_Day1_002.wav");
 	}
 	}
