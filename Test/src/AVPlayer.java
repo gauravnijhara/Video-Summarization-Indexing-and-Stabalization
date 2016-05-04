@@ -27,15 +27,18 @@ public class AVPlayer implements ActionListener {
     Thread audioThread;
     Thread timerThread;
 
+    public static String videoFileNameFV;
+    public static String audioFileNameFV;
+
     public String videoFileName;
     public String audioFileName;
     static boolean summarize = false;
     byte[] summarizedVidByte;
 
-    private static final String DEFAULT_LOCATION = "/home/prapthi/Documents/prap/prapthi/prap/USC/Spring2016/project/Alin_Day1_002.zip.crdownload_FILES";
-    private static final String DEFAULT_FILENAME = "Alin_Day1_002";
-    private static final String DEFAULT_MOVIE = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".rgb";
-    private static final String DEFAULT_SOUND = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".wav";
+    //private static final String DEFAULT_LOCATION = "/home/prapthi/Documents/prap/prapthi/prap/USC/Spring2016/project/Alin_Day1_002.zip.crdownload_FILES";
+    //private static final String DEFAULT_FILENAME = "Alin_Day1_002";
+    //private static final String DEFAULT_MOVIE = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".rgb";
+    //private static final String DEFAULT_SOUND = DEFAULT_LOCATION + "/" + DEFAULT_FILENAME + ".wav";
 
     private static final int FRAME_RATE = 15;
 
@@ -152,7 +155,7 @@ public class AVPlayer implements ActionListener {
             @Override
             public void run() {
                 try {
-                    playWAV(audioFileName);
+                    playWAV(audioFileNameFV);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -180,7 +183,7 @@ public class AVPlayer implements ActionListener {
 
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         try {
-            File file = new File(videoFileName);
+            File file = new File(videoFileNameFV);
             is = new FileInputStream(file);
 
             //long len = file.length();
@@ -391,6 +394,15 @@ public void readFrameSum(int ind) {
             ren.videoFileName = args[0];
         }*/
 	//System.out.println(args[0]);
+	if(args.length == 1 && args[0] == "zero")
+	summarize = true;
+	else if(args.length == 2) {
+	audioFileNameFV = args[0];
+        videoFileNameFV = args[1];
+	}
+	else {
+		System.out.println("run as: java AVPlayer zero OR java AVPlayer audioFile videoFile");
+	}
 	//run it as: java AVPlayer zero
 	ArrayList<Integer> input = new ArrayList<Integer>();
 	for(int i=1; i<=150; i++) {
@@ -400,7 +412,6 @@ public void readFrameSum(int ind) {
 		input.add(i);	
 	}
 
-	summarize = true;
 	if(summarize)
 	ab.summarize("../Alin_Day1_002/Alin_Day1_002.rgb", "../Alin_Day1_002/Alin_Day1_002.wav", input);
 
