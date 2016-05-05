@@ -46,6 +46,7 @@ public class AVPlayer implements ActionListener {
     InputStream is;
     byte[] bytes;
     int currentFrame = 0;
+    int counter = 0;
     List<Integer> list;
 
     private void createThreads() {
@@ -76,7 +77,6 @@ public class AVPlayer implements ActionListener {
         });
 
 	timerThread = new Thread(new Runnable() {
-            int counter = 0;
             @Override
             public void run() {
                 while (true) {
@@ -128,13 +128,21 @@ public void videoInitialize(List<Integer> frames)
 int ind=0;
             // show these
             for(int i=0; i<frames.size(); i++)  {
-		    long lStartTime = System.currentTimeMillis();
-		    readFrameSum(ind);
-		    ind+=width*height*3;
-		    long difference = (65) - (System.currentTimeMillis() - lStartTime);
-		    if(difference>0) {
-		        sleep(difference);
-		    }
+            	if(frames.get(i)<=4499) {
+				    long lStartTime = System.currentTimeMillis();
+				    readFrameSum(ind);
+				    ind+=width*height*3;
+				    long difference = (65) - (System.currentTimeMillis() - lStartTime);
+				    if(difference>0) {
+				        sleep(difference);
+				    }
+            	}
+            	else {
+            		suspendThreads();
+            		counter = 0;
+            		lbText1.setText(counter + " seconds");
+            		setDisplay();
+            	}
             }
 	timerThread.suspend();
     }
@@ -220,7 +228,6 @@ public void readFrameSum(int ind) {
             numberOfFrames = file.length() / len;
             bytes = new byte[(int)len];
 
-            int totalBytesRead = 0;
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -236,12 +243,6 @@ public void readFrameSum(int ind) {
         }
 	// initializes the playSound Object
 	playSound = new PlaySound(inputStream);
-	/*for (int i=1; i<150; i++) {
-            list.add(i);
-        }
-        for (int i=450; i<600; i++) {
-            list.add(i);
-        }*/
        System.out.println("HERE!!"+list.size());
 	try {
 	    playSound.audioInitialize(list);
@@ -251,15 +252,12 @@ public void readFrameSum(int ind) {
 	    return;
 	}
 	
-	//videoInitialize(list);
     }
     public static void main(String[] args) throws InterruptedException, PlayWaveException {
 	AVPlayer ab = new AVPlayer();
 
 	summarize = true;
 	        ab.setDisplay();
-	
-        
     }
 
     @Override
@@ -283,9 +281,14 @@ public void readFrameSum(int ind) {
         }
 
         if (e.getSource() == stopButton) {
-            status = PlayerStatus.STOPPED;
+        	/*status = PlayerStatus.STOPPED;
             playPauseButton.setText("Play");
-            suspendThreads();
+            suspendThreads();*/
+	status = PlayerStatus.STOPPED;
+	suspendThreads();
+	counter = 0;
+	lbText1.setText(counter + " seconds");
+	setDisplay();
         }
     }
 
