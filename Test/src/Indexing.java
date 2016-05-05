@@ -291,16 +291,21 @@ public class Indexing {
 //		    System.err.println("usage: java -jar AVPlayer.jar [RGB file] [WAV file]");
 //		    return;
 //		}
-		
-		
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
+		String audioFile = args[0];
+		String videoFile = args[1];
+		String metadata = args[2];
+		String image = args[3];
+		//String[] extract = audioFile.split("/");
+		/*String tempStr = extract[extract.length-1];
+		metadata+= tempStr.substring(0, tempStr.length()-4);
+		metadata+=".metadata";*/
 		Indexing temp = new Indexing();
-		ois = new ObjectInputStream(new FileInputStream("Yin_Snack.metadata"));
-		temp.calculateIndexedImageFeatures("../images/Yin_Snack/6472.rgb");
+		ois = new ObjectInputStream(new FileInputStream(metadata));
+		temp.calculateIndexedImageFeatures(image);
 		int frame = temp.returnIndex();
-		//displayFrame("../Yin_Snack/Yin_Snack.rgb",frame);
 		System.out.println("best frame match is " + frame);
+		
 		int remX = (int)(frame%15);
 		int nomalizedIndex = frame - remX - 15;
 		
@@ -312,7 +317,7 @@ public class Indexing {
 		}
 		
 		AVPlayer player = new AVPlayer();
-		player.summarize("../Yin_Snack/Yin_Snack.rgb","../Yin_Snack/Yin_Snack.wav",summaryInput);
+		player.summarize(videoFile,audioFile, summaryInput);
 		player.setDisplay();
 		
 		ois.close();
