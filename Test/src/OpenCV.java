@@ -250,10 +250,15 @@ public class OpenCV {
 					 temp.x = mins.get(j);
 					 
 					 // if difference between max and min is less than or equal to 105 , merge interval
-					 while(j+1 < mins.size() && (( mins.get(j+1) - mins.get(j) ) < 90 ))
+					 while(j+1 < mins.size() && (( mins.get(j+1) - mins.get(j) ) < 75 ))
 					 {
 						 j++;
 						 frameCount++;
+						 if(mins.get(j) - temp.x > 300)
+						 {
+							 temp.y = temp.x + 300;
+							 break;
+						 }
 					 }
 					 
 					 if(frameCount == 0)
@@ -298,9 +303,16 @@ public class OpenCV {
 					 }
 					 
 					 // if interval is grater than 20 sec , make it 20 
-					 if(temp.y - temp.x > 270)
-						 temp.y = temp.x + 270;
+					 if(temp.y - temp.x > 240)
+						 temp.y = temp.x + 240;
 					 
+					 if(temp.y > 4499)
+					 {
+						 temp.x -= (temp.y - 4499);
+						 temp.y = 4499;
+					 }
+						 
+						 
 					 totalFrameNum += temp.y - temp.x;
 					 intervals.add(temp);
 					 
@@ -316,7 +328,8 @@ public class OpenCV {
 				 Point temp = intervals.get(i);
 				 for(int j1 = (int) temp.x +1 ; j1 <= temp.y ; j1++)
 				 {
-					 summaryInput.add(j1);
+					 if(j1 <= 4499)
+						 summaryInput.add(j1);
 				 }
 			}
 			
