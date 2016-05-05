@@ -28,6 +28,14 @@ import org.opencv.imgproc.Imgproc;
 
 public class Indexing {
 
+	public static String videoFileNameFV = "../Alireza_Day2_003/Alireza_Day2_003.rgb";
+	public static String audioFileNameFV = "../Alireza_Day2_003/Alireza_Day2_003.wav"; 
+	public static String metaFileNameFV = "Alireza_Day2_003.metadata";
+	public static String imgFileNameFV = "../images/Alireza_Day2_003/29952.rgb";
+
+	int iwidth = 1280;
+	int iheight = 720;
+
 	static FeatureDetector featureDet;
 	static DescriptorExtractor descExtract;
 	static DescriptorMatcher matcher;
@@ -49,25 +57,23 @@ public class Indexing {
 		try
 		{
 			
-	        indeximg = new BufferedImage(1280, 960, BufferedImage.TYPE_INT_RGB);
+	        indeximg = new BufferedImage(iwidth, iheight, BufferedImage.TYPE_INT_RGB);
 			featureDet = FeatureDetector.create(FeatureDetector.ORB);
 			descExtract = DescriptorExtractor.create(DescriptorExtractor.ORB);
 			matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE);
 			indexDescriptor = new Mat();
 
 			
-			int width = 1280;
-			int height = 960;
 	
 			File file = new File(index);
 			InputStream is = new FileInputStream(file);
 			
 
 			//long len = file.length();
-			long len = width*height*3;
+			long len = iwidth*iheight*3;
 			byte[] bytes = new byte[(int)len];
 			byte[] data = new byte[(int)len];
-			Mat frame = new Mat(height, width, CvType.CV_8UC3);
+			Mat frame = new Mat(iheight, iwidth, CvType.CV_8UC3);
 			Mat yuvframe = new Mat();
 			
 			int totalBytesRead = 0;
@@ -81,14 +87,14 @@ public class Indexing {
 			
 			int ind = 0;
 	
-			for(int y = 0; y < height; y++){
+			for(int y = 0; y < iheight; y++){
 	
-				for(int x = 0; x < width; x++){
+				for(int x = 0; x < iwidth; x++){
 	
 					byte a = 0;
 					byte r = bytes[ind];
-					byte g = bytes[ind+height*width];
-					byte b = bytes[ind+height*width*2]; 
+					byte g = bytes[ind+iheight*iwidth];
+					byte b = bytes[ind+iheight*iwidth*2]; 
 	
 	                data[ind * 3] = b;
 	                data[ind * 3 + 1] = g;
@@ -292,17 +298,18 @@ public class Indexing {
 //		    return;
 //		}
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		String audioFile = args[0];
-		String videoFile = args[1];
-		String metadata = args[2];
-		String image = args[3];
+		//String audioFile = args[0];
+		//String videoFile = args[1];
+		//String metadata = args[2];
+		//String image = args[3];
 		//String[] extract = audioFile.split("/");
 		/*String tempStr = extract[extract.length-1];
 		metadata+= tempStr.substring(0, tempStr.length()-4);
 		metadata+=".metadata";*/
 		Indexing temp = new Indexing();
-		ois = new ObjectInputStream(new FileInputStream(metadata));
-		temp.calculateIndexedImageFeatures(image);
+		ois = new ObjectInputStream(new FileInputStream(metaFileNameFV));
+		temp.calculateIndexedImageFeatures(imgFileNameFV);
+		
 		int frame = temp.returnIndex();
 		System.out.println("best frame match is " + frame);
 		
@@ -317,7 +324,7 @@ public class Indexing {
 		}
 		
 		AVPlayer player = new AVPlayer();
-		player.summarize(videoFile,audioFile, summaryInput);
+		player.summarize(videoFileNameFV,audioFileNameFV, summaryInput);
 		player.setDisplay();
 		
 		ois.close();

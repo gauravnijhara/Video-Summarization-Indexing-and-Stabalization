@@ -24,8 +24,13 @@ import org.opencv.videoio.VideoCapture;
 import org.opencv.imgproc.*;
 
 
+
 public class OpenCV {
 	
+	public static String videoFileNameFV = "../Yin_Snack/Yin_Snack.rgb";
+	public static String audioFileNameFV = "../Yin_Snack/Yin_Snack.wav"; 
+	public static String metaFileNameFV = "Yin_Snack.metadata";
+
     //static ArrayList<Mat> metaData = new ArrayList<Mat>();
     static ArrayList<Mat> YUVImages = new ArrayList<Mat>();
     static ArrayList<Integer> SADValues = new ArrayList<Integer>();
@@ -47,9 +52,8 @@ public class OpenCV {
 	   {
 		
 		//setup metadata file
-//		String filename = "Yin_Snack" + ".metadata";
-//	    File metafile = new File(filename);
-//	    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename));
+//	    File metafile = new File(metaFileNameFV);
+//	    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(metaFileNameFV));
 	    
 	    // load opencv
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -74,7 +78,7 @@ public class OpenCV {
 
 		try {
 			
-			File file = new File("../Alin_Day1_002/Alin_Day1_002.rgb");
+			File file = new File(videoFileNameFV);
 			InputStream is = new FileInputStream(file);
 			//is.skip(1244160000);
 			
@@ -139,6 +143,7 @@ public class OpenCV {
 				{
 					//RGBframe.release();
 					RGBSecondframe.put(0, 0, data);
+					//setup metadata file
 					//calculateMetadata(RGBSecondframe, oos);
 						//lbIm2.setIcon(new ImageIcon(img));
 
@@ -148,6 +153,7 @@ public class OpenCV {
 				else
 				{
 					RGBframe.put(0, 0, data);
+					//setup metadata file
 					//calculateMetadata(RGBframe, oos);
 
 				}
@@ -308,8 +314,9 @@ public class OpenCV {
 			}
 			
 			AVPlayer player = new AVPlayer();
-			player.summarize("../Alin_Day1_002/Alin_Day1_002.rgb","../Alin_Day1_002/Alin_Day1_002.wav",summaryInput);
+			player.summarize(videoFileNameFV,audioFileNameFV,summaryInput);
 			player.setDisplay();
+			//setup metadata file
 			//oos.close();
 						
 		} catch (FileNotFoundException e) {
@@ -501,6 +508,6 @@ public class OpenCV {
 //		}
 		OpenCV test = new OpenCV();
 //		test.initOpevCV(args);
-		test.processAudio("../Alin_Day1_002/Alin_Day1_002.wav");
+		test.processAudio(audioFileNameFV);
 	}
 	}
