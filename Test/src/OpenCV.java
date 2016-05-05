@@ -29,7 +29,7 @@ public class OpenCV {
 	
 	public static String videoFileNameFV = "../Alireza_Day2_003/Alireza_Day2_003.rgb";
 	public static String audioFileNameFV = "../Alireza_Day2_003/Alireza_Day2_003.wav"; 
-	public static String metaFileNameFV = "Alireza_Day2_003.metadata";
+	public static String metaFileNameFV = "Yin_Snack.metadata";
 
     //static ArrayList<Mat> metaData = new ArrayList<Mat>();
     static ArrayList<Mat> YUVImages = new ArrayList<Mat>();
@@ -177,13 +177,13 @@ public class OpenCV {
 			 }
 			 
 			 avg /= 4499;
-			 avg *= 2.90;
+			 avg *= 2.65;
 			 
 			 int increment = 0;
 			 int totalFrameNum = 0;
 
 			 
-			 while(totalFrameNum < 1335 || totalFrameNum > 1500)
+			 while(totalFrameNum < 1275 || totalFrameNum > 1425)
 			 {
 				 int index = 0;
 				 int prevValue = SADValues.get(index++);
@@ -248,7 +248,9 @@ public class OpenCV {
 					 int frameCount = 0;
 					 Point temp = new Point();
 					 temp.x = mins.get(j);
-					 while(j+1 < mins.size() && (( mins.get(j+1) - mins.get(j) ) < 150 ))
+					 
+					 // if difference between max and min is less than or equal to 105 , merge interval
+					 while(j+1 < mins.size() && (( mins.get(j+1) - mins.get(j) ) < 90 ))
 					 {
 						 j++;
 						 frameCount++;
@@ -288,11 +290,16 @@ public class OpenCV {
 						 temp.y--;
 					 }
 					 
-					 if((temp.y - temp.x) < 60)
+					 // if interval is less than 5 seconds , make it 5 seconds
+					 if((temp.y - temp.x) < 75)
 					 {
-						 int diff = (int) (60 - (temp.y - temp.x));
+						 int diff = (int) (75 - (temp.y - temp.x));
 						 temp.y += diff;
 					 }
+					 
+					 // if interval is grater than 20 sec , make it 20 
+					 if(temp.y - temp.x > 270)
+						 temp.y = temp.x + 270;
 					 
 					 totalFrameNum += temp.y - temp.x;
 					 intervals.add(temp);
