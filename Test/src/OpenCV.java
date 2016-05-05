@@ -27,9 +27,9 @@ import org.opencv.imgproc.*;
 
 public class OpenCV {
 	
-	public static String videoFileNameFV = "../Yin_Snack/Yin_Snack.rgb";
-	public static String audioFileNameFV = "../Yin_Snack/Yin_Snack.wav"; 
-	public static String metaFileNameFV = "Yin_Snack.metadata";
+	public static String videoFileNameFV = "../Alireza_Day2_003/Alireza_Day2_003.rgb";
+	public static String audioFileNameFV = "../Alireza_Day2_003/Alireza_Day2_003.wav"; 
+	public static String metaFileNameFV = "Alireza_Day2_003.metadata";
 
     //static ArrayList<Mat> metaData = new ArrayList<Mat>();
     static ArrayList<Mat> YUVImages = new ArrayList<Mat>();
@@ -177,13 +177,13 @@ public class OpenCV {
 			 }
 			 
 			 avg /= 4499;
-			 avg *= 2.775;
+			 avg *= 2.90;
 			 
 			 int increment = 0;
 			 int totalFrameNum = 0;
 
 			 
-			 while(totalFrameNum < 1335 || totalFrameNum > 1365)
+			 while(totalFrameNum < 1335 || totalFrameNum > 1500)
 			 {
 				 int index = 0;
 				 int prevValue = SADValues.get(index++);
@@ -191,9 +191,9 @@ public class OpenCV {
 				 
 				 //trying different averages
 				 if(totalFrameNum < 1275)
-					 avg = avg - avg*.05;
+					 avg = avg - avg*.005;
 				 else
-					 avg = avg + avg*.05;
+					 avg = avg + avg*.005;
 				 
 				 totalFrameNum = 0;
 				mins.removeAll(mins);
@@ -507,7 +507,7 @@ public class OpenCV {
 //		    return;
 //		}
 		OpenCV test = new OpenCV();
-//		test.initOpevCV(args);
-		test.processAudio(audioFileNameFV);
+		test.initOpevCV(args);
+		//test.processAudio(audioFileNameFV);
 	}
 	}
